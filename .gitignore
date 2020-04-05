@@ -1,0 +1,8 @@
+/Includes/**
+/Libs/**
+/Runtimes/**
+/Debug/**
+/.vs/**
+PowerTownSim.sln
+/PowerTownSim/Debug/**
+/PowerTownSim/x64/**

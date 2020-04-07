@@ -2,14 +2,18 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexCoord;
 
-uniform float time;
 
 out vec2 texCoord;
 out vec4 vertColor;
 
+uniform mat4 transform;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
 void main()
 {
-   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+   gl_Position = projection * view * model * transform * vec4(aPos, 1.0);
    texCoord = aTexCoord;
    vertColor = vec4(1.0,1.0,1.0,1.0);
 };

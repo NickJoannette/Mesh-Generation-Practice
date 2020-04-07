@@ -22,15 +22,13 @@ OpenGLWindow::OpenGLWindow(float WIDTH, float HEIGHT)
 	}
 	glfwMakeContextCurrent(window);
 	glViewport(0, 0, WIDTH,HEIGHT);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);  
 
 	glewInit();
+
+	glEnable(GL_DEPTH_TEST);
+
 }
 
-
-void OpenGLWindow::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-	glViewport(0, 0, width, height);
-}
 
 void OpenGLWindow::clearColor(float r, float g, float b, float a) {
 	glClearColor(r, g, b, a);

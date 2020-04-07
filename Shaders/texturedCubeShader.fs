@@ -10,6 +10,6 @@ uniform sampler2D tex2;
 
 void main()
 {
-	FragColor =  mix(texture(tex2,texCoord),texture(tex1, texCoord),abs(cos(time))); //(0.2 + (abs(sin(time)))) * vertColor *
-
+	vec4 luminosity = vec4(1,1,1.0,1.0);
+	FragColor = abs(sin(0.75*time)) * luminosity * texture(tex1, texCoord); 
 };

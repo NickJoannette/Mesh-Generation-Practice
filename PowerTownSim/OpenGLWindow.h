@@ -15,8 +15,11 @@ class OpenGLWindow
 		void clearColor(float r, float g, float b, float a);
 		inline float getWidth() { return WIDTH; }
 		inline float getHeight() { return HEIGHT; }
+		inline float getAspectRatio() { return ASPECT_RATIO; }
 
 		static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+		static void processKeyInput(GLFWwindow* window);
+		static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 		inline GLFWwindow * glWindow() { return window; }
 

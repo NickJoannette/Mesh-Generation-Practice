@@ -90,7 +90,8 @@ public:
 			Position += glm::vec3(0, -1.0, 0) * velocity;
 		if (direction == UP)
 			Position += glm::vec3(0, 1.0, 0) * velocity;
-		if (Position.y < 0.4f) Position.y = 0.4f;
+		//Position.y = 2;
+		if (Position.y < .5) Position.y = .5;
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -135,12 +136,12 @@ public:
 	// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 	void ProcessMouseScroll(float yoffset)
 	{
-		if (Zoom >= 1.0f && Zoom <= 45.0f)
+		if (Zoom >= 1.0f && Zoom <= ZOOM)
 			Zoom -= yoffset;
 		if (Zoom <= 1.0f)
 			Zoom = 1.0f;
-		if (Zoom >= 45.0f)
-			Zoom = 45.0f;
+		if (Zoom >= ZOOM)
+			Zoom = ZOOM;
 	}
 
 private:

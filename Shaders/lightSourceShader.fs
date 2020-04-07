@@ -3,9 +3,9 @@ uniform float time;
 
 out vec4 FragColor;
 
-uniform vec3 lightColor;
+uniform vec3 lightSourceColor;
 
 void main()
 {
-	FragColor = vec4(lightColor.xyz, 1.0); 
+	FragColor = vec4(lightSourceColor.xyz, 1.0); 
 };

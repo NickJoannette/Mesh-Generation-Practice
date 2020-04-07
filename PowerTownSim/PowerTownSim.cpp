@@ -24,10 +24,13 @@ float lastFrame = 0.0f;
 
 OpenGLWindow * mainWindow = new OpenGLWindow(SCR_WIDTH, SCR_HEIGHT);
 GLFWwindow * mWind = mainWindow->glWindow();
-Camera camera(glm::vec3(0,1,2));
+Camera camera(glm::vec3(0,2,4));
 
 
+glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 100.0f);
 
+
+glm::vec3 rayDirection = glm::vec3(0);
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -106,7 +109,31 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	camera.ProcessMouseScroll(yoffset);
 }
 
+// Mouse button click callback
+// ----------------------------------------------------------------------
 
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+		glm::vec3 camPos = camera.Position;
+		glm::mat4 transf = glm::inverse(projection);
+		float x = (2.0f * (float)visibleCursorX) / SCR_WIDTH - 1.0f;
+		float y = 1.0f - (2.0f * (float)visibleCursorY) / SCR_HEIGHT;
+		float z = 1.0f;
+		glm::vec3 ray_nds = glm::vec3(x, y, z);
+		glm::vec4 ray_clip = glm::vec4(ray_nds, 1.0);
+		glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
+		ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+		glm::vec3 ray_wor = (glm::inverse(camera.GetViewMatrix()) * ray_eye);
+		ray_wor = glm::normalize(ray_wor);
+
+		std::cout << "------------------------------------------------------------" << std::endl;
+		std::cout << "Camera's Position in the World: " << "[ " << camera.Position.x << " , " << camera.Position.y << " , " << camera.Position.z << " ]" << std::endl;
+		std::cout << "Normalized Ray Direction in the World: " << "[ " << ray_wor.x << " , " << ray_wor.y << " , " << ray_wor.z << " ]" << std::endl;
+
+		rayDirection = ray_wor;
+	}
+}
 
 
 
@@ -117,6 +144,7 @@ int main() {
 
 	glfwSetScrollCallback(mWind, scroll_callback);
 	glfwSetCursorPosCallback(mWind, mouse_callback);
+	glfwSetMouseButtonCallback(mWind, mouse_button_callback);
 	glfwSetFramebufferSizeCallback(mWind, framebuffer_size_callback);
 	glfwSetInputMode(mWind, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -141,47 +169,47 @@ int main() {
 	};
 
 	float cubeVertices[] = {
-	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, -1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,  0.0f, -1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  0.0f, -1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,0.0f,  0.0f, -1.0f,
 
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,  0.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,0.0f,  0.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,0.0f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,0.0f,  0.0f, 1.0f,
 
-	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,-1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,-1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,-1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,-1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,-1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,-1.0f,  0.0f,  0.0f,
 
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,1.0f,  0.0f,  0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,1.0f,  0.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,1.0f,  0.0f,  0.0f,
 
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, -1.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f, -1.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, -1.0f,  0.0f,
 
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  1.0f,  0.0f
 	};
 
 
@@ -220,7 +248,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int bgWidth, bgHeight, bgNrChan;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char *bgData = stbi_load("../Textures/cursor2.png", &bgWidth, &bgHeight, &bgNrChan, STBI_rgb_alpha);
+	unsigned char *bgData = stbi_load("../Textures/cursor1.png", &bgWidth, &bgHeight, &bgNrChan, STBI_rgb_alpha);
 	if (bgData)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bgWidth, bgHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, bgData);
@@ -249,8 +277,9 @@ int main() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bgEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(bgIndices), bgIndices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 	glBindVertexArray(0);
 
 #pragma endregion cube
@@ -263,22 +292,39 @@ int main() {
 	glBindVertexArray(lightSourceVAO);
 	glBindBuffer(GL_ARRAY_BUFFER,cubeVBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glBindVertexArray(0);
 
-	glm::mat4 lightSourceModel = glm::mat4(1);
-	glm::mat4 lightSourceTransform = glm::mat4(1);
-	lightSourceTransform = glm::translate(lightSourceTransform, glm::vec3(-20, 4, 0));
+
+
 #pragma endregion
 
+#pragma region Utility cube vertex array objects
+	unsigned int utilityCubeVAO;
+	glm::mat4 utilityCubeModel = glm::mat4(1);
+	utilityCubeModel = glm::translate(utilityCubeModel, glm::vec3(0,0,2));
+
+	utilityCubeModel = glm::scale(utilityCubeModel, glm::vec3(.75f));
+	glm::mat4 utilityCubeTransform = glm::mat4(1);
+	glGenVertexArrays(1, &utilityCubeVAO);
+	glBindVertexArray(utilityCubeVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+	glBindVertexArray(0);
+
+#pragma endregion
 
 
 #pragma region textures
 
-	unsigned int mountainTexture;
-	glGenTextures(1, &mountainTexture);
-	glBindTexture(GL_TEXTURE_2D, mountainTexture);
+	unsigned int woodAndSteelContainerTexture;
+	glGenTextures(1, &woodAndSteelContainerTexture);
+	glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerTexture);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -287,7 +333,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int mountainWidth, mountainHeight, mountainNrChan;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char *mountainData = stbi_load("../Textures/circuitBoard3.jpg", &mountainWidth, &mountainHeight, &mountainNrChan, STBI_rgb_alpha);
+	unsigned char *mountainData = stbi_load("../Textures/container_DiffuseMap.png", &mountainWidth, &mountainHeight, &mountainNrChan, STBI_rgb_alpha);
 	if (mountainData)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mountainWidth, mountainHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, mountainData);
@@ -310,7 +356,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int width, height, nrChan;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char *data = stbi_load("../Textures/groundTex2.jpg", &width, &height, &nrChan, STBI_rgb_alpha);
+	unsigned char *data = stbi_load("../Textures/groundTex1.jpg", &width, &height, &nrChan, STBI_rgb_alpha);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -322,9 +368,9 @@ int main() {
 	}
 	stbi_image_free(data);
 
-	unsigned int texture1;
-	glGenTextures(1, &texture1);
-	glBindTexture(GL_TEXTURE_2D, texture1);
+	unsigned int woodAndSteelContainerSpecularMap;
+	glGenTextures(1, &woodAndSteelContainerSpecularMap);
+	glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerSpecularMap);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -332,7 +378,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	stbi_set_flip_vertically_on_load(true);
-	data = stbi_load("../Textures/digitalBg1.jpg", &width, &height, &nrChan, STBI_rgb_alpha);
+	data = stbi_load("../Textures/container_SpecularMap.png", &width, &height, &nrChan, STBI_rgb_alpha);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -351,19 +397,15 @@ int main() {
 
 	glm::mat4 bgTrans = glm::mat4(1);
 	glm::mat4 bgModel = glm::mat4(1);
-	bgTrans = glm::translate(bgTrans, glm::vec3(0, 0.35, 0));
-	bgModel = glm::translate(bgModel, glm::vec3(0.0, 0.0, 0.0));
 	bgModel = glm::rotate(bgModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
 
 	glm::mat4 cubeModel = glm::mat4(1.0f);
-	cubeModel = glm::scale(cubeModel, glm::vec3(1.0, 1.0, 1.0));
-	cubeTransform = glm::translate(cubeTransform, glm::vec3(0.0, 0.4, 0.0));
 
-	Surface surface(222, 222, true);
+	Surface surface(75, 75, true);
 	glm::mat4 surfaceModel = glm::mat4(1);
 	glm::mat4 surfaceTransform = glm::mat4(1);
 	surfaceTransform = glm::translate(surfaceTransform, glm::vec3(0.0, -1.0, 0.0));
-	surfaceTransform = glm::translate(surfaceTransform, glm::vec3(-50, 0.0, 25));
+	surfaceTransform = glm::translate(surfaceTransform, glm::vec3(-30, 0.0, 25));
 	surfaceTransform = glm::rotate(surfaceTransform, glm::radians(-90.0f), glm::vec3(1.0, 0, 0));
 	surfaceTransform = glm::scale(surfaceTransform, glm::vec3(100, 100, 100));
 
@@ -374,15 +416,16 @@ int main() {
 	surfaceTransform2 = glm::scale(surfaceTransform2, glm::vec3(6, 6, 6));
 
 
-	Surface mouseSurface(1, 1, true);
-	glm::mat4 mouseSurfaceModel = glm::mat4(2);
+	Surface mouseSurface(4, 4, true);
+	glm::mat4 mouseSurfaceModel = glm::mat4(1);
 	glm::mat4 mouseSurfaceTransform = glm::mat4(1);
 
 
 	while (!glfwWindowShouldClose(mWind))
 	{
+		glfwPollEvents();
+
 		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 100.0f);
 
 
 		surfaceTransform2 = glm::rotate(surfaceTransform2, glm::radians(0.08f), glm::vec3(0.0, 1.0, 0.0));
@@ -411,8 +454,8 @@ int main() {
 		glBindVertexArray(bgVAO);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
-		glBindTexture(GL_TEXTURE_2D, texture1);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerSpecularMap);
+	//	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(0);
@@ -422,6 +465,14 @@ int main() {
 
 #pragma region draw light source
 
+		glm::vec3 lightSourceColor = glm::vec3(1.0,1.0,1.0);
+		glm::mat4 lightSourceModel = glm::mat4(1);
+		glm::mat4 lightSourceTransform = glm::mat4(1);
+		glm::vec3 lightSourcePosition = glm::vec3(0, -0.05, 0);
+
+		lightSourcePosition += glm::vec3(1.2* cosf(0.25*timeValue), 0,1.2* sinf(0.25*timeValue));
+		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition);
+		lightSourceModel = glm::scale(lightSourceModel,glm::vec3(0.05f));
 
 		glBindVertexArray(lightSourceVAO);
 		glEnableVertexAttribArray(0);
@@ -433,11 +484,91 @@ int main() {
 		lightSourceShaderProgram.setMat4("transform", lightSourceTransform);
 		lightSourceShaderProgram.setMat4("model", lightSourceModel);
 		lightSourceShaderProgram.setFloat("time", timeValue);
-		lightSourceShaderProgram.setVec3("lightColor", glm::vec3(1.0,1.0,1.0));
+		lightSourceShaderProgram.setVec3("lightSourceColor", lightSourceColor);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(0);
 #pragma endregion
+
+
+#pragma region draw utility cube
+		utilityCubeModel = glm::rotate(utilityCubeModel, glm::radians(0.0015f), glm::vec3(1.0, 1.0, 0.0));
+
+
+		cubeShaderProgram.use();
+		cubeShaderProgram.setInt("tex1", 0);
+		cubeShaderProgram.setMat4("view", view);
+		cubeShaderProgram.setMat4("projection", projection);
+		cubeShaderProgram.setMat4("transform", utilityCubeTransform);
+		cubeShaderProgram.setFloat("time", timeValue);
+		cubeShaderProgram.setVec3("viewPosition", camera.Position);
+
+
+		glBindVertexArray(utilityCubeVAO);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerTexture);
+		cubeShaderProgram.setMat4("model", utilityCubeModel);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(0);
+		glBindVertexArray(0);
+#pragma endregion
+
+
+#pragma region cube drawing
+
+		cubeModel = glm::rotate(cubeModel, glm::radians(0.003f), glm::vec3(0.0, 1.0, 0.0));
+		cubeShaderProgram.use();
+		cubeShaderProgram.setInt("tex1", 0);
+		cubeShaderProgram.setMat4("view", view);
+		cubeShaderProgram.setMat4("projection", projection);
+		cubeShaderProgram.setMat4("transform", cubeTransform);
+		cubeShaderProgram.setFloat("time", timeValue);
+		cubeShaderProgram.setVec3("viewPosition", camera.Position);
+
+
+		// Set the material uniformszzz
+		cubeShaderProgram.setFloat("material.shininess", 64.0f);
+
+		// Set the light source uniforms
+		cubeShaderProgram.setVec3("lightSource.ambient", .2f * lightSourceColor);
+		cubeShaderProgram.setVec3("lightSource.diffuse", 0.5f * lightSourceColor); // darken diffuse light a bit
+		cubeShaderProgram.setVec3("lightSource.specular", 1.0f * lightSourceColor);
+		cubeShaderProgram.setVec3("lightSource.position", lightSourcePosition);
+		
+		// Set the right texture unit to the materials diffuse tex map and bind
+		cubeShaderProgram.setInt("material.diffuse", 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerTexture);
+
+		// Bind the specular map
+		cubeShaderProgram.setInt("material.specular", 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerSpecularMap);
+
+		glBindVertexArray(cubeVAO);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
+		// Make the draw call with its data
+		cubeShaderProgram.setMat4("model", cubeModel);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(0);
+		glBindVertexArray(0);
+		// Unbind it
+#pragma endregion
+
+
 
 		// Draw The "Ground" Surface Grid
 
@@ -447,37 +578,10 @@ int main() {
 		surfaceShader.setMat4("transform", surfaceTransform);
 		surfaceShader.setMat4("model", surfaceModel);
 		glBindTexture(GL_TEXTURE_2D, texture);
-		surface.Draw();
+		//surface.Draw();
 		glBindTexture(GL_TEXTURE_2D, 0);
 ;
 
-#pragma region cube drawing
-		
-		cubeTransform = glm::rotate(cubeTransform, glm::radians(0.03f), glm::vec3(0.0, 1.0, 0.0));
-		cubeShaderProgram.use();
-		cubeShaderProgram.setInt("tex1", 0);
-		cubeShaderProgram.setMat4("view", view);
-		cubeShaderProgram.setMat4("projection", projection);
-		cubeShaderProgram.setMat4("transform", cubeTransform);
-		cubeShaderProgram.setFloat("time", timeValue);
-
-		glBindVertexArray(cubeVAO);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mountainTexture);
-		// Make the draw call with its data
-			cubeShaderProgram.setMat4("model", cubeModel);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(0);
-		glBindVertexArray(0);
-		// Unbind it
-#pragma endregion
 
 
 
@@ -491,7 +595,7 @@ int main() {
 		mouseSurfaceTransform = glm::translate(glm::mat4(1), glm::vec3(((visibleCursorX - (SCR_WIDTH/2)) * 2 / SCR_WIDTH), 
 			((visibleCursorY - (SCR_HEIGHT / 2)) * 2 / SCR_HEIGHT),
 			0.0));
-		mouseSurfaceTransform = glm::scale(mouseSurfaceTransform, glm::vec3(0.05, 0.05, 0.05));
+		mouseSurfaceTransform = glm::scale(mouseSurfaceTransform, glm::vec3(0.02, 0.02, 0.02));
 		backgroundShaderProgram.setMat4("transform", mouseSurfaceTransform);
 		backgroundShaderProgram.setMat4("model", mouseSurfaceModel);
 
@@ -501,6 +605,7 @@ int main() {
 		glBindVertexArray(bgVAO);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, backgroundTexture);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -509,7 +614,7 @@ int main() {
 		glClear(GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_BLEND);
 		glfwSwapBuffers(mWind);
-		glfwPollEvents();
+
 	}	
 	
 	// Properly clean/Delete all of GLFW's resources that were allocated

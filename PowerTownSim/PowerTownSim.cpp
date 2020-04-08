@@ -31,13 +31,19 @@ glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->g
 
 
 glm::vec3 rayDirection = glm::vec3(0);
-
+glm::vec3 rayPosition = glm::vec3(0);
+glm::vec3 rayColor = glm::vec3(1);
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
+	srand(glfwGetTime());
+
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+		rayColor = glm::vec3(rand()%255, rand() % 255, rand() % 255);
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -131,7 +137,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		std::cout << "Camera's Position in the World: " << "[ " << camera.Position.x << " , " << camera.Position.y << " , " << camera.Position.z << " ]" << std::endl;
 		std::cout << "Normalized Ray Direction in the World: " << "[ " << ray_wor.x << " , " << ray_wor.y << " , " << ray_wor.z << " ]" << std::endl;
 
-		rayDirection = ray_wor;
+		if (rayDirection == glm::vec3(0))rayDirection = ray_wor;
+		else rayDirection = glm::vec3(0);
+
+		if (rayPosition == glm::vec3(0))rayPosition = camera.Position;
+		else rayPosition = glm::vec3(0);
 	}
 }
 
@@ -345,28 +355,8 @@ int main() {
 	}
 	stbi_image_free(mountainData);
 
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int width, height, nrChan;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char *data = stbi_load("../Textures/groundTex1.jpg", &width, &height, &nrChan, STBI_rgb_alpha);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(data);
+
 
 	unsigned int woodAndSteelContainerSpecularMap;
 	glGenTextures(1, &woodAndSteelContainerSpecularMap);
@@ -378,7 +368,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	stbi_set_flip_vertically_on_load(true);
-	data = stbi_load("../Textures/container_SpecularMap.png", &width, &height, &nrChan, STBI_rgb_alpha);
+	unsigned char * data = stbi_load("../Textures/container_SpecularMap.png", &width, &height, &nrChan, STBI_rgb_alpha);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -390,8 +380,8 @@ int main() {
 	}
 	stbi_image_free(data);
 
-#pragma endregion textures
 
+#pragma endregion textures
 
 	glm::mat4 cubeTransform = glm::mat4(1);
 
@@ -424,13 +414,13 @@ int main() {
 	while (!glfwWindowShouldClose(mWind))
 	{
 		glfwPollEvents();
+		processInput(mWind);
 
 		glm::mat4 view = camera.GetViewMatrix();
-
+		projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 100.0f);
 
 		surfaceTransform2 = glm::rotate(surfaceTransform2, glm::radians(0.08f), glm::vec3(0.0, 1.0, 0.0));
 
-		processInput(mWind);
 
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -470,7 +460,7 @@ int main() {
 		glm::mat4 lightSourceTransform = glm::mat4(1);
 		glm::vec3 lightSourcePosition = glm::vec3(0, -0.05, 0);
 
-		lightSourcePosition += glm::vec3(1.2* cosf(0.25*timeValue), 0,1.2* sinf(0.25*timeValue));
+		lightSourcePosition += glm::vec3(1.2* cosf(0.2*timeValue), 0,1.2* sinf(0.2*timeValue));
 		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition);
 		lightSourceModel = glm::scale(lightSourceModel,glm::vec3(0.05f));
 
@@ -503,7 +493,6 @@ int main() {
 		cubeShaderProgram.setFloat("time", timeValue);
 		cubeShaderProgram.setVec3("viewPosition", camera.Position);
 
-
 		glBindVertexArray(utilityCubeVAO);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
@@ -533,16 +522,22 @@ int main() {
 		cubeShaderProgram.setFloat("time", timeValue);
 		cubeShaderProgram.setVec3("viewPosition", camera.Position);
 
-
 		// Set the material uniformszzz
-		cubeShaderProgram.setFloat("material.shininess", 64.0f);
+		cubeShaderProgram.setFloat("material.shininess", 64.0);
 
 		// Set the light source uniforms
-		cubeShaderProgram.setVec3("lightSource.ambient", .2f * lightSourceColor);
+		cubeShaderProgram.setVec3("lightSource.ambient", .125f * lightSourceColor);
 		cubeShaderProgram.setVec3("lightSource.diffuse", 0.5f * lightSourceColor); // darken diffuse light a bit
 		cubeShaderProgram.setVec3("lightSource.specular", 1.0f * lightSourceColor);
 		cubeShaderProgram.setVec3("lightSource.position", lightSourcePosition);
 		
+		// Set the flashLight source uniforms
+		cubeShaderProgram.setVec3("flashLight.position", rayPosition);
+		cubeShaderProgram.setVec3("flashLight.direction", rayDirection);
+		cubeShaderProgram.setVec3("flashLight.color", glm::normalize(rayColor));
+		cubeShaderProgram.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
+
+
 		// Set the right texture unit to the materials diffuse tex map and bind
 		cubeShaderProgram.setInt("material.diffuse", 0);
 		glActiveTexture(GL_TEXTURE0);
@@ -577,13 +572,9 @@ int main() {
 		surfaceShader.setMat4("projection", projection);
 		surfaceShader.setMat4("transform", surfaceTransform);
 		surfaceShader.setMat4("model", surfaceModel);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerSpecularMap);
 		//surface.Draw();
 		glBindTexture(GL_TEXTURE_2D, 0);
-;
-
-
-
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 

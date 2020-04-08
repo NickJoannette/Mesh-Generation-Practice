@@ -54,7 +54,7 @@ public:
 		Position = position;
 		WorldUp = up;
 		Yaw = yaw;
-		Pitch = pitch;
+		Pitch = -35.0f;
 		updateView();
 	}
 	// Constructor with scalar values

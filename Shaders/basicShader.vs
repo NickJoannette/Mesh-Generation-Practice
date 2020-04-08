@@ -9,9 +9,17 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform float time;
+uniform sampler2D heightTex;
+
 void main()
 {
-	 gl_Position = projection * view * model * transform * vec4(aPos, 1.0);
-	 texCoord = aTexCoord;
 
+
+
+	texCoord = aTexCoord;
+		
+	float height = texture(heightTex, texCoord).r* (0.025 + 0.03*cos(0.1*time));
+	
+	gl_Position = projection * view * model * transform * vec4(vec3(aPos.x,aPos.y,height), 1.0);
 };

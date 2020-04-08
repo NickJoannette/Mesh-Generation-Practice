@@ -13,8 +13,8 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 				vertices.push_back((float)i / normalizer);
 				vertices.push_back((float)j / normalizer);
 				vertices.push_back(0);
-				vertices.push_back((((float)i / normalizer) + 1.0) / 2.0);
-				vertices.push_back((((float)j / normalizer) + 1.0) / 2.0);
+				vertices.push_back((((float)i / normalizer) ));
+				vertices.push_back((((float)j / normalizer)));
 			}
 	}
 	else
@@ -61,7 +61,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLshort), indices.data(), GL_STATIC_DRAW);
 	glDisableVertexAttribArray(0);

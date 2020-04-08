@@ -26,7 +26,6 @@ OpenGLWindow::OpenGLWindow(float WIDTH, float HEIGHT)
 	glewInit();
 
 	glEnable(GL_DEPTH_TEST);
-
 }
 
 

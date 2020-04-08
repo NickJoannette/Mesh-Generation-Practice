@@ -65,9 +65,6 @@
     <ClInclude Include="TerrainRenderer.h">
       <Filter>Header Files\Renderers</Filter>
     </ClInclude>
-    <ClInclude Include="SimpleGridOfSquares.h">
-      <Filter>Header Files\VertexGenerators</Filter>
-    </ClInclude>
     <ClInclude Include="BasicVertexGenerators.h">
       <Filter>Header Files\VertexGenerators</Filter>
     </ClInclude>
@@ -87,6 +84,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Surface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleGridOfSquares.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

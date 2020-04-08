@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "OpenGLWindow.h"
 #include "Camera.h"
 #include "Rendering.h"
@@ -24,11 +25,13 @@ float lastFrame = 0.0f;
 
 OpenGLWindow * mainWindow = new OpenGLWindow(SCR_WIDTH, SCR_HEIGHT);
 GLFWwindow * mWind = mainWindow->glWindow();
-Camera camera(glm::vec3(0,5.25,8));
+Camera camera(glm::vec3(4,1.5,4));
 
 
 glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 100.0f);
 
+std::vector<glm::vec3> userBlocks;
+glm::vec3 lightSourcePosition = glm::vec3(4.75, 2.5, 4.75);
 
 glm::vec3 rayDirection = glm::vec3(0);
 glm::vec3 rayPosition = glm::vec3(0);
@@ -45,6 +48,13 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 		rayColor = glm::vec3(rand()%255, rand() % 255, rand() % 255);
 
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+		camera.MovementSpeed -= .01f;
+
+	if (glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
+		camera.MovementSpeed += .01f;
+
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -54,10 +64,6 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
 
-	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
-		camera.ProcessKeyboard(DOWN, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-		camera.ProcessKeyboard(UP, deltaTime);
 
 }
 
@@ -70,6 +76,15 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+		camera.ProcessKeyboard(DOWN, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		camera.ProcessKeyboard(UP, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+		lightSourcePosition = camera.Position + camera.Front;
+}
 
 // glfw: whenever the mouse moves, this callback is called
 // -------------------------------------------------------
@@ -160,6 +175,20 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		if (rayPosition == glm::vec3(0))rayPosition = camera.Position;
 		else rayPosition = glm::vec3(0);
 	}
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		glm::vec3 camPos = camera.Position;
+		glm::mat4 transf = glm::inverse(projection);
+		float x = (2.0f * (float)visibleCursorX) / SCR_WIDTH - 1.0f;
+		float y = 1.0f - (2.0f * (float)visibleCursorY) / SCR_HEIGHT;
+		float z = 1.0f;
+		glm::vec3 ray_nds = glm::vec3(x, y, z);
+		glm::vec4 ray_clip = glm::vec4(ray_nds, 1.0);
+		glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
+		ray_eye = glm::vec4(ray_eye.x, -ray_eye.y, -1.0, 0.0);
+		glm::vec3 ray_wor = (glm::inverse(camera.GetViewMatrix()) * ray_eye);
+		ray_wor = glm::normalize(ray_wor);
+		userBlocks.push_back(camera.Position + camera.Front);
+	}
 }
 
 
@@ -174,6 +203,7 @@ int main() {
 	glfwSetMouseButtonCallback(mWind, mouse_button_callback);
 	glfwSetFramebufferSizeCallback(mWind, framebuffer_size_callback);
 	glfwSetInputMode(mWind, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetKeyCallback(mWind, key_callback);
 
 #pragma endregion
 
@@ -287,6 +317,30 @@ int main() {
 	}
 	stbi_image_free(bgData);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	unsigned int heightMap;
+	glGenTextures(1, &heightMap);
+	glBindTexture(GL_TEXTURE_2D, heightMap);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	int bumpMapWidth, bumpMapHeight, bumpMapNrChan;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char *bumpMapData = stbi_load("../Textures/heightMapTest1.png", &bumpMapWidth, &bumpMapHeight, &bumpMapNrChan, STBI_rgb_alpha);
+	if (bgData)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bumpMapWidth, bumpMapHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, bumpMapData);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(bumpMapData);
+	glBindTexture(GL_TEXTURE_2D, 0);
 #pragma endregion 
 
 #pragma region cube buffer objects
@@ -385,7 +439,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char * data = stbi_load("../Textures/testTexSpecMap2.jpg", &width, &height, &nrChan, STBI_rgb_alpha);
+	unsigned char * data = stbi_load("../Textures/testTexSpecMap3.png", &width, &height, &nrChan, STBI_rgb_alpha);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -408,12 +462,12 @@ int main() {
 
 	glm::mat4 cubeModel = glm::mat4(1.0f);
 
-	Surface surface(75, 75, true);
+	Surface surface(200, 200, true);
 	glm::mat4 surfaceModel = glm::mat4(1);
 	glm::mat4 surfaceTransform = glm::mat4(1);
-	surfaceTransform = glm::translate(surfaceTransform, glm::vec3(-30, -0.5, 25));
+	surfaceTransform = glm::translate(surfaceTransform, glm::vec3(0, -0.5, 25));
 	surfaceTransform = glm::rotate(surfaceTransform, glm::radians(-90.0f), glm::vec3(1.0, 0, 0));
-	surfaceTransform = glm::scale(surfaceTransform, glm::vec3(50, 50, 50));
+	surfaceTransform = glm::scale(surfaceTransform, glm::vec3(32, 32, 32));
 
 	Surface surface2(150, 150, true);
 	glm::mat4 surfaceModel2 = glm::mat4(2);
@@ -471,15 +525,15 @@ int main() {
 
 #pragma region draw light source
 
-		glm::vec3 lightSourceColor = glm::vec3(0.05,0.15,0.65);
+		glm::vec3 lightSourceColor = glm::vec3(1);//glm::vec3(0.25 + 0.75*sinf(0.65*timeValue),0.5 + 0.5*cosf(0.45*timeValue),0.5+sinf(0.35*timeValue));
 		glm::mat4 lightSourceModel = glm::mat4(1);
 		glm::mat4 lightSourceTransform = glm::mat4(1);
-		glm::vec3 lightSourcePosition = glm::vec3(10, 6.25, 0);
 
+		glm::vec3 thisLightPosition = lightSourcePosition;
 		//lightSourcePosition += glm::vec3(1.5* cosf(timeValue), 2.5 + 2.5*sinf(0.5*timeValue),1.5* sinf(timeValue));
-		lightSourcePosition += glm::vec3(10*cosf(timeValue*0.1), 0,0);
-		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition);
-		lightSourceModel = glm::scale(lightSourceModel,glm::vec3(0.05f));
+		thisLightPosition += glm::vec3(0,0,0);
+		lightSourceModel = glm::translate(lightSourceModel, thisLightPosition);
+		lightSourceModel = glm::scale(lightSourceModel,glm::vec3(0.1f));
 
 		glBindVertexArray(lightSourceVAO);
 		glEnableVertexAttribArray(0);
@@ -549,9 +603,9 @@ int main() {
 		cubeShaderProgram.setVec3("lightSource.ambient",  0.2f* lightSourceColor);
 		cubeShaderProgram.setVec3("lightSource.diffuse", .6f * lightSourceColor); // darken diffuse light a bit
 		cubeShaderProgram.setVec3("lightSource.specular", 1.0f * lightSourceColor);
-		cubeShaderProgram.setVec3("lightSource.position", lightSourcePosition);
+		cubeShaderProgram.setVec3("lightSource.position", thisLightPosition);
 		
-		// Set the flashLight source uniforms
+		// Set the flashLight source uniforms6
 		cubeShaderProgram.setVec3("flashLight.position", rayPosition);
 		cubeShaderProgram.setVec3("flashLight.direction", rayDirection);
 		cubeShaderProgram.setVec3("flashLight.color", glm::normalize(rayColor));
@@ -572,23 +626,71 @@ int main() {
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
-		for (int i = 0; i < 20; ++i) {
-			for (int j = 0; j < 20; j++) {
-				// Make the draw call with its data
-				cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 0.0, j)));
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-				cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 1.0, j)));
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-				cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 2.0, j)));
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-				cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 3.0, j)));
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-				cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 4.0, j)));
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-				cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 5.0, j)));
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-			}
+
+
+		
+
+		for (int i = 0; i < 10; i++) for (int j = 0; j < 10; j++) {
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 0, j)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
+/*
+		for (int i = 0; i < 10; i++) for (int j = 0; j < 5; j++) {
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(-0.5, j, i)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(9.5, j, i)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		for (int i = 0; i < 10; i++) for (int j = 0; j < 5; j++) {
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, j, -0.5)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			if (i == 5 && j < 3) continue;
+
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, j, 9.5)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		for (int i = 0; i < 10; i++) for (int j = 0; j < 10; j++) {
+			if (j == 2 && i ==2) continue;
+
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 5, j)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		for (int i = 0; i < 8; i++) for (int j = 0; j < 8; j++) {
+			if (j == 2 && i == 2) continue;
+
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 6, j)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+
+		for (int i = 0; i < 6; i++) for (int j = 0; j < 6; j++) {
+			if (j == 2 && i == 2) continue;
+
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 7, j)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) {
+			if (j == 2 && i == 2) continue;
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 8, j)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		for (int i = 0; i < 2; i++) for (int j = 0; j < 2; j++) {
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, glm::vec3(i, 9, j)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		*/
+
+		for (int i = 0; i < userBlocks.size(); i++) {
+			cubeShaderProgram.setMat4("model", glm::translate(cubeModel, userBlocks.at(i)));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDisableVertexAttribArray(2);
 		glDisableVertexAttribArray(1);
@@ -597,7 +699,7 @@ int main() {
 		// Unbind it
 #pragma endregion
 
-
+		
 
 		// Draw The "Ground" Surface Grid
 
@@ -606,18 +708,14 @@ int main() {
 		surfaceShader.setMat4("projection", projection);
 		surfaceShader.setMat4("transform", surfaceTransform);
 		surfaceShader.setMat4("model", surfaceModel);
-		surfaceShader.setVec3("fragColor", glm::vec3(0.0, 0, 0.25));
+		surfaceShader.setVec3("fragColor", glm::vec3(0.0, 0.0,0.35));
+		surfaceShader.setInt("heightMap", 0);
+		surfaceShader.setFloat("time", timeValue);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, heightMap);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		surface.Draw();
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-
-
-
-
-
-
-
 
 
 		glClear(GL_DEPTH_BUFFER_BIT);

@@ -112,7 +112,7 @@ void main()
 DirLight dirLight;
 dirLight.direction = vec3(1,-1,0);
 dirLight.ambient = vec3(0.0,0.0,0.0);
-dirLight.diffuse = vec3(0.15,0.15,0.15);
+dirLight.diffuse = vec3(0.0,0.0,0.0);
 dirLight.specular = vec3(0.0,0.0,0.0);
 
 vec3 directionalLight = CalcDirLight(dirLight, norm,viewDir);

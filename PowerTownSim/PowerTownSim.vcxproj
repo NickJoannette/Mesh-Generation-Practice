@@ -73,7 +73,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;C:\Users\freel\source\repos\PowerTownSim\Libs;</LibraryPath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Users\freel\source\repos\PowerTownSim\Includes;</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Users\freel\source\repos\PowerTownSim\Includes;C:\Users\freel\source\repos\PowerTownSim\Includes\assimp;</IncludePath>
     <ReferencePath>$(VC_ReferencesPath_x86);C:\Users\freel\source\repos\PowerTownSim\Runtimes;</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -98,7 +98,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;glut32.lib;opengl32.lib;glew32.lib;SDL2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc141-mtd.lib;zlibd.lib;IrrXMLd.lib;zlibstaticd.lib;glfw3.lib;glut32.lib;opengl32.lib;glew32.lib;SDL2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -156,7 +156,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FixedFunctionRenderer.cpp" />
-    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="SimpleGridOfSquares.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="TerrainRenderer.cpp" />
@@ -168,6 +167,7 @@
     <ClInclude Include="BasicVertexGenerators.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="FixedFunctionRenderer.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="Rendering.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Shader.h" />
@@ -178,7 +178,17 @@
     <ClInclude Include="MasterRenderer.h" />
     <ClInclude Include="OpenGLWindow.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets" Condition="Exists('..\packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets'))" />
+  </Target>
 </Project>

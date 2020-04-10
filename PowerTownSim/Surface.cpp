@@ -63,7 +63,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLshort), indices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
 
@@ -74,7 +74,7 @@ void Surface::Draw()
 	glBindVertexArray(vao);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);

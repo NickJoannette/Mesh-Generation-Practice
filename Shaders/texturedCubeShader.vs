@@ -12,12 +12,16 @@ uniform mat4 transform;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform float time;
 
 void main()
 {
-   gl_Position = projection * view * model * transform * vec4(aPos, 1.0);
+   vec3 vertexPosition = aPos;
+   if (vertexPosition.y > -2) vertexPosition.y += 0.2*sin(2*time);
+   
+   gl_Position = projection * view * model * transform * vec4(vertexPosition, 1.0);
    texCoord = aTexCoord;
    vertColor = vec4(1.0,1.0,1.0,1.0);
    normal = mat3(transpose(inverse(model))) * aNormal;
-   fragPosition = vec3(model * vec4(aPos,1.0));
+   fragPosition = vec3(model * vec4(vertexPosition,1.0));
 };

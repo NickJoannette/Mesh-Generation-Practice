@@ -16,13 +16,13 @@ struct DirLight {
 };  
 uniform DirLight dirLight;
 
-struct LightSource {
+struct PointLight {
 vec3 position;
 vec3 ambient;
 vec3 diffuse;
 vec3 specular;
 };
-uniform LightSource lightSource;
+uniform PointLight pointLight;
 
 
 struct FlashLight {
@@ -62,35 +62,36 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     return (ambient + diffuse + specular);
 }  
 
-void main()
-{
+vec3 CalcPointLight (PointLight light, vec3 normal, vec3 viewDir) {
 
-	// Mathematical realism
-	float fragToLightDistance = length(lightSource.position - fragPosition);
-	
+	// Calculate attenuation factor based on distance from the light to this fragment	
+	float fragToLightDistance = length(light.position - fragPosition);
 	float attenuationFactor = (1.0)/(1.0 + 0.09*fragToLightDistance + 0.032*(fragToLightDistance * fragToLightDistance));
 
 	// Ambient Lighting
-	vec3 ambientLight = lightSource.ambient * vec3(texture(material.diffuse, texCoord));
+	vec3 ambientLight = light.ambient * vec3(texture(material.diffuse, texCoord));
 	
 	// Diffuse Lighting
-	vec3 norm = normalize(normal);
-	vec3 incomingLightDirection = normalize(lightSource.position - fragPosition);
-	float diffuseDot = max(dot(norm, incomingLightDirection), 0.0);
+	vec3 incomingLightDirection = normalize(light.position - fragPosition);
+	float diffuseDot = max(dot(normal, incomingLightDirection), 0.0);
 	
-	vec3 diffuseLight = lightSource.diffuse * diffuseDot * vec3(texture(material.diffuse, texCoord));
+	vec3 diffuseLight = light.diffuse * diffuseDot * vec3(texture(material.diffuse, texCoord));
 	
 	// Specular Lighting
-	vec3 viewDir = normalize(viewPosition - fragPosition);
-	vec3 reflectDir = reflect(-incomingLightDirection, norm); 
+	vec3 reflectDir = reflect(-incomingLightDirection, normal); 
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-	vec3 specularLight = lightSource.specular * spec * vec3(texture(material.specular, texCoord));  
+	vec3 specularLight = light.specular * spec * vec3(texture(material.specular, texCoord));  
 	
 	// Apply attenuation
 	ambientLight *= attenuationFactor;
 	diffuseLight *= attenuationFactor;
-	specularLight *= attenuationFactor;
+	specularLight *= 2*attenuationFactor;
 	
+	return (ambientLight + diffuseLight + specularLight);
+}
+
+vec3 CalcFlashLight (FlashLight light, vec3 normal, vec3 viewDir) {
+
 	// Flashlight/ Spotlight lighting
 	
 	vec3 fragToFlashLightDirection = normalize(flashLight.position - fragPosition);
@@ -104,19 +105,31 @@ void main()
 	
 	vec3 flashLightSpecularLight =  abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff)))*flashLight.color * flashLightAttenuationFactor *
 (	pow(abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff))), material.shininess)* vec3(texture(material.specular, texCoord)) );
-		
+	
 	flashLightSpecularLight *= flashLightAttenuationFactor;
 	flashLightAmbientLight *= flashLightAttenuationFactor;
-	flashLightSpecularLight;
 
-DirLight dirLight;
-dirLight.direction = vec3(1,-1,0);
-dirLight.ambient = vec3(0.0,0.0,0.0);
-dirLight.diffuse = vec3(0.0,0.0,0.0);
-dirLight.specular = vec3(0.0,0.0,0.0);
+	if (theta > flashLight.cutOff) return (flashLightAmbientLight + flashLightSpecularLight);
+	else return vec3(0,0,0);
+	
+}
 
-vec3 directionalLight = CalcDirLight(dirLight, norm,viewDir);
-	if (theta > flashLight.cutOff) {
-	FragColor = vec4(vec3(ambientLight + diffuseLight + specularLight + flashLightAmbientLight +  flashLightSpecularLight+ directionalLight),1.0) * texture(tex1, texCoord); 
-	} else FragColor = vec4(vec3(ambientLight + diffuseLight + specularLight + directionalLight),1.0) * texture(tex1, texCoord); 
+void main()
+{
+// Define static direction light source for now
+	DirLight dirLight;
+	dirLight.direction = vec3(0,-1,0);
+	dirLight.ambient = vec3(0.1,0.1,0.1);
+	dirLight.diffuse = vec3(0.22,0.22,0.22);
+	dirLight.specular = vec3(0.1,0.1,0.1);
+
+
+	vec3 viewDir = normalize(viewPosition - fragPosition);
+	vec3 norm = normalize(normal);
+
+	vec3 directionalLight = CalcDirLight(dirLight, norm, viewDir);
+	vec3 pointLight = CalcPointLight(pointLight, norm, viewDir);
+	vec3 flashLight = CalcFlashLight(flashLight, norm, viewDir);
+
+	FragColor = vec4((directionalLight + pointLight + flashLight),1.0) * texture(tex1, texCoord); 
 };

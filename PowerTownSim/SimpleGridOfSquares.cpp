@@ -12,8 +12,9 @@ Mesh SimpleGridOfSquares::makeMesh(unsigned int w, unsigned int l, bool f, unsig
 		for (int i = 0; i <= l; i++)
 			vertices.push_back(Vertex{ 
 				glm::vec3((float)i*scale, 0, ((float)j*scale)), // Position
-				glm::vec3(0,1,0),	//Normal	
-				glm::vec2(0,1)	//Texture
+				glm::vec2(0,1),	//Texture
+
+				glm::vec3(0,1,0)	//Normal	
 				});
 		
 

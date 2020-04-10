@@ -25,7 +25,7 @@ private:
 	unsigned int vao;
 
 	std::vector <float> vertices;
-	std::vector <GLshort> indices;
+	std::vector <GLuint> indices;
 
 	// Geometric variables
 

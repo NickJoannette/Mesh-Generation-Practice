@@ -76,7 +76,6 @@ public:
 	// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
 	void ProcessKeyboard(Camera_Movement direction, float deltaTime)
 	{
-		std::cout << UP << std::endl;
 		float oldY = Position.y;
 		float velocity = MovementSpeed * deltaTime;
 		if (direction == FORWARD)
@@ -90,9 +89,9 @@ public:
 		Position.y = oldY;
 
 		if (direction == DOWN)
-			Position += glm::vec3(0, -1.0, 0);// *velocity;
+			Position += glm::vec3(0, -1.0, 0) *velocity;
 		if (direction == UP)
-			Position += glm::vec3(0, 1.0, 0);// *velocity;
+			Position += glm::vec3(0, 1.0, 0) *velocity;
 		//Position.y = 2;
 	/*if (Position.y < 1.0) Position.y = 1.0;
 	if (Position.y > 4.5) Position.y = 4.5;

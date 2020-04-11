@@ -25,7 +25,7 @@ enum Camera_Movement {
 // Default camera values
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
-const float SPEED = 2.5f;
+const float SPEED = 0.35f;
 const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
 
@@ -54,7 +54,7 @@ public:
 		Position = position;
 		WorldUp = up;
 		Yaw = yaw;
-		Pitch = -35.0f;
+		Pitch = PITCH;
 		updateView();
 	}
 	// Constructor with scalar values

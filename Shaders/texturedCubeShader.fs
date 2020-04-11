@@ -1,4 +1,5 @@
 #version 330 core
+#define NR_POINT_LIGHTS 4
 
 struct Material {
     sampler2D diffuse;
@@ -22,7 +23,7 @@ vec3 ambient;
 vec3 diffuse;
 vec3 specular;
 };
-uniform PointLight pointLight;
+uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 
 struct FlashLight {
@@ -42,7 +43,6 @@ in vec3 fragPosition;
 
 uniform float time;
 uniform sampler2D tex1;
-uniform sampler2D tex2;
 uniform vec3 viewPosition;
 
 
@@ -85,7 +85,7 @@ vec3 CalcPointLight (PointLight light, vec3 normal, vec3 viewDir) {
 	// Apply attenuation
 	ambientLight *= attenuationFactor;
 	diffuseLight *= attenuationFactor;
-	specularLight *= 2*attenuationFactor;
+	specularLight *= attenuationFactor;
 	
 	return (ambientLight + diffuseLight + specularLight);
 }
@@ -127,9 +127,13 @@ void main()
 	vec3 viewDir = normalize(viewPosition - fragPosition);
 	vec3 norm = normalize(normal);
 
-	vec3 directionalLight = CalcDirLight(dirLight, norm, viewDir);
-	vec3 pointLight = CalcPointLight(pointLight, norm, viewDir);
-	vec3 flashLight = CalcFlashLight(flashLight, norm, viewDir);
-
-	FragColor = vec4((directionalLight + pointLight + flashLight),1.0) * texture(tex1, texCoord); 
+	//phase 1: directional light
+    vec3 result = CalcDirLight(dirLight, norm, viewDir);
+    // phase 2: point lights
+    for(int i = 0; i < NR_POINT_LIGHTS; i++)
+        result += CalcPointLight(pointLights[i], norm, viewDir);    
+    // phase 3: spot light
+     result += CalcFlashLight(flashLight, norm, viewDir);   
+	
+	FragColor = vec4(result,1.0) * texture(tex1, texCoord); 
 };

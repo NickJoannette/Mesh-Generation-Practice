@@ -13,11 +13,18 @@
 
 class Shader
 {
+
 public:
+
+	enum ShaderType {
+		GENERIC,
+		TERRAIN
+	};
+
 	unsigned int ID;
 	// constructor generates the shader on the fly
 	// ------------------------------------------------------------------------
-	Shader(const char* vertexPath, const char* fragmentPath)
+	Shader(const char* vertexPath, const char* fragmentPath,std::string st)
 	{
 		// 1. retrieve the vertex/fragment source code from filePath
 		std::string vertexCode;
@@ -52,6 +59,7 @@ public:
 		// 2. compile shaders
 		unsigned int vertex, fragment;
 		// vertex shader
+
 		vertex = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(vertex, 1, &vShaderCode, NULL);
 		glCompileShader(vertex);
@@ -65,6 +73,20 @@ public:
 		ID = glCreateProgram();
 		glAttachShader(ID, vertex);
 		glAttachShader(ID, fragment);
+
+/*
+		if (st == "T") {
+			const GLchar* feedbackVaryings[] = { "feedbackData" };
+			glTransformFeedbackVaryings(ID, 1, feedbackVaryings, GL_INTERLEAVED_ATTRIBS);
+		}
+
+		*/
+
+
+
+
+
+
 		glLinkProgram(ID);
 		checkCompileErrors(ID, "PROGRAM");
 		// delete the shaders as they're linked into our program now and no longer necessary

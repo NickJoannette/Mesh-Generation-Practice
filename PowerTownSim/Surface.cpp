@@ -11,8 +11,8 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 		for (int j = 0; j <= width; j++)
 			for (int i = 0; i <= length; i++) {
 				vertices.push_back((float)i / normalizer);
-				vertices.push_back((float)j / normalizer);
 				vertices.push_back(0);
+				vertices.push_back((float)j / normalizer);
 				vertices.push_back((((float)i / normalizer) ));
 				vertices.push_back((((float)j / normalizer)));
 			}

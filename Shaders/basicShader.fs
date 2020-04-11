@@ -1,38 +1,170 @@
 #version 330 core
 
-out vec4 FragColor;
+
+#define NR_POINT_LIGHTS 4
+
+struct Material {
+    sampler2D diffuse;
+    sampler2D specular;
+    float     shininess;
+};
+uniform Material material;
+
+struct DirLight {
+    vec3 direction;
+  
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};  
+uniform DirLight dirLight;
+
+struct PointLight {
+vec3 position;
+vec3 ambient;
+vec3 diffuse;
+vec3 specular;
+};
+uniform PointLight pointLights[NR_POINT_LIGHTS];
+
+struct FlashLight {
+vec3 position;
+vec3 direction;
+vec3 color;
+float cutOff;
+};
+uniform FlashLight flashLight;
+
+
 
 in vec2 texCoord;
 in float fragHeight;
-in vec3 fragPos;
+in vec3 fragPosition;
 
 uniform vec3 fragColor;
-uniform sampler2D heightTex;
+
+
 uniform vec3 clickPoint;
+uniform vec3 viewPosition;
+
+
+// LIGHTING ----------
+
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
+{
+    vec3 lightDir = normalize(-light.direction);
+    // diffuse shading
+    float diff = max(dot(normal, lightDir), 0.0);
+    // specular shading
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    // combine results
+    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, texCoord));
+    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, texCoord));
+    vec3 specular = light.specular * spec * vec3(texture(material.specular, texCoord));
+    return (ambient + diffuse + specular);
+}  
+
+vec3 CalcPointLight (PointLight light, vec3 fragPosition) {
+
+	// Calculate attenuation factor based on distance from the light to this fragment	
+	float fragToLightDistance = length(light.position - fragPosition);
+	float attenuationFactor = (1.0)/(1.0 + 0.09*fragToLightDistance + 0.032*(fragToLightDistance * fragToLightDistance));
+
+	// Ambient 
+	vec3 ambientLight = attenuationFactor*light.ambient ;
+	
+	vec3 diffuseLight = attenuationFactor*light.diffuse;
+	
+	return (0.2*ambientLight + 0.5*diffuseLight);
+}
+
+vec3 CalcFlashLight (FlashLight light, vec3 normal, vec3 viewDir) {
+
+	// Flashlight/ Spotlight lighting
+	
+	vec3 fragToFlashLightDirection = normalize(flashLight.position - fragPosition);
+	float theta = dot(fragToFlashLightDirection, normalize (-flashLight.direction));
+	
+	// Specular component of flashlight light
+	vec3 flashLightAmbientLight = abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff)))*flashLight.color *.5f;
+	
+	float fragToFlashLightDistance = length (flashLight.position - fragPosition);
+	float flashLightAttenuationFactor = (1.0)/(1.0 + 0.09*fragToFlashLightDistance + 0.032*(fragToFlashLightDistance * fragToFlashLightDistance));
+	
+	vec3 flashLightSpecularLight =  abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff)))*flashLight.color * flashLightAttenuationFactor *
+(	pow(abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff))), material.shininess)* vec3(texture(material.specular, texCoord)) );
+	
+	flashLightSpecularLight *= flashLightAttenuationFactor;
+	flashLightAmbientLight *= flashLightAttenuationFactor;
+
+	if (theta > flashLight.cutOff) return (flashLightAmbientLight + flashLightSpecularLight);
+	else return vec3(0,0,0);
+	
+}
+
+
+
+
+
+
+
+
+
+out vec4 FragColor;
+
+
 
 void main()
 {
-
-
 float r = 0.888*fragHeight;
 float g = 0.888*fragHeight;
 float b = 0.888*fragHeight;
-
-
 if (fragHeight < 0.03) {
 r = 0.0;
 g = 0.0;
-b = 0.2 + 6.25*fragHeight;
+b = 0.2 - 5*abs(fragHeight);
+if (b < 0.1) b = 0.021;
 }
 
-if (abs(fragPos.z - clickPoint.z) < 0.1) r = 1.0;
-if (abs(fragPos.x - clickPoint.x) < 0.1){ g = 1.0;}
-
-/*if (abs(fragPos.x - clickPoint.x) < 0.5 && abs(fragPos.z - clickPoint.z) < 0.5) {
+/*if (abs(fragPosition.x - clickPoint.x) < 0.5 && abs(fragPosition.z - clickPoint.z) < 0.5) {
 r = 1.0;
  g = 1.0;
 }*/
 
+
 vec3 color = vec3(r,g,b);
-	FragColor = vec4(color,1);
+
+
+// LIGHTING
+
+// Define static direction light source for now
+	DirLight dirLight;
+	dirLight.direction = vec3(0,-1,0);
+	dirLight.ambient = vec3(0.13,0.13,0.13);
+	dirLight.diffuse = vec3(0.55,0.55,0.55);
+	dirLight.specular = vec3(0.01,0.01,0.01);
+
+
+	vec3 viewDir = normalize(viewPosition - fragPosition);
+	vec3 norm = normalize(vec3(0,1,0)); // no normals calculated for the height map yet. Assume straight up.
+	
+	
+	//phase 1: directional light
+    vec3 lightingResult = CalcDirLight(dirLight, norm, viewDir);
+    // phase 2: point lights
+
+    // phase 3: spot light
+     lightingResult += CalcFlashLight(flashLight, norm, viewDir);   
+	
+	vec3 pointResult = vec3(0,0,0);
+	    for(int i = 0; i < NR_POINT_LIGHTS; i++)
+        pointResult += CalcPointLight(pointLights[i],fragPosition);    
+	
+	vec3 combinedResult = pointResult + (color * lightingResult);
+	if (abs(fragPosition.z - clickPoint.z) < 0.025) combinedResult.r = 1.0;
+if (abs(fragPosition.x - clickPoint.x) < 0.025){ combinedResult.g = 1.0;}
+	
+FragColor = vec4( combinedResult, 1);	
+	
 };

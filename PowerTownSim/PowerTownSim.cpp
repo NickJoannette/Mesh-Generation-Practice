@@ -29,10 +29,10 @@ float lastFrame = 0.0f;
 
 OpenGLWindow * mainWindow = new OpenGLWindow(SCR_WIDTH, SCR_HEIGHT);
 GLFWwindow * mWind = mainWindow->glWindow();
-Camera camera(glm::vec3(4,1.5,4));
+Camera camera(glm::vec3(0,1,0));
 
-Model myFirstModel = Model("../Models/myTests/camoboat.obj");
-glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 100.0f);
+Model myFirstModel = Model("../Models/myTests/rowboat.obj");
+glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.001f, 1000.0f);
 
 std::vector<glm::vec3> userBlocks;
 glm::vec3 lightSourcePosition = glm::vec3(4.75, 2.5, 4.75);
@@ -40,8 +40,11 @@ glm::vec3 lightSourcePosition = glm::vec3(4.75, 2.5, 4.75);
 glm::vec3 rayDirection = glm::vec3(0);
 glm::vec3 rayPosition = glm::vec3(0);
 glm::vec3 rayColor = glm::vec3(1);
+glm::vec3 rayColor2 = glm::vec3(1);
+glm::vec3 rayColor3 = glm::vec3(1);
+glm::vec3 rayColor4 = glm::vec3(1);
 
-glm::vec3 destination = glm::vec3(NULL);
+glm::vec3 destination = glm::vec3(0,0,0);
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
@@ -51,15 +54,18 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-		rayColor = glm::vec3(rand()%255, rand() % 255, rand() % 255);
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+		rayColor = glm::vec3(rand() % 255, rand() % 255, rand() % 255);
+		rayColor2 = glm::vec3(rand() % 255, rand() % 255, rand() % 255);
+		rayColor3 = glm::vec3(rand() % 255, rand() % 255, rand() % 255);
+		rayColor4 = glm::vec3(rand() % 255, rand() % 255, rand() % 255);
 
-
+	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
-		camera.MovementSpeed -= .01f;
+		camera.MovementSpeed -= .001f;
 
 	if (glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
-		camera.MovementSpeed += .01f;
+		camera.MovementSpeed += .001f;
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -288,10 +294,10 @@ int main() {
 	};
 
 
-	Shader lightSourceShaderProgram("../Shaders/lightSourceShader.vs", "../Shaders/lightSourceShader.fs");
-	Shader cubeShaderProgram("../Shaders/texturedCubeShader.vs", "../Shaders/texturedCubeShader.fs");
-	Shader backgroundShaderProgram("../Shaders/backgroundTextureShader.vs", "../Shaders/backgroundTextureShader.fs");
-	Shader surfaceShader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs");
+	Shader lightSourceShaderProgram("../Shaders/lightSourceShader.vs", "../Shaders/lightSourceShader.fs", "G");
+	Shader cubeShaderProgram("../Shaders/texturedCubeShader.vs", "../Shaders/texturedCubeShader.fs", "G");
+	Shader backgroundShaderProgram("../Shaders/backgroundTextureShader.vs", "../Shaders/backgroundTextureShader.fs", "G");
+	Shader surfaceShader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
 
 #pragma region background buffer objects
 	unsigned int bgVBO;
@@ -347,7 +353,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int bumpMapWidth, bumpMapHeight, bumpMapNrChan;
-	stbi_set_flip_vertically_on_load(true);
+	stbi_set_flip_vertically_on_load(false);
 	unsigned char *bumpMapData = stbi_load("../Textures/earthHeightMap.png", &bumpMapWidth, &bumpMapHeight, &bumpMapNrChan, STBI_rgb_alpha);
 	if (bgData)
 	{
@@ -433,7 +439,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int transparent1Width, transparent1Height, transparent1NrChan;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char *transparent1Data = stbi_load("../Textures/transparentTex1.jpg", &transparent1Width, &transparent1Height, &transparent1NrChan, STBI_rgb_alpha);
+	unsigned char *transparent1Data = stbi_load("../Textures/scenery1.jpg", &transparent1Width, &transparent1Height, &transparent1NrChan, STBI_rgb_alpha);
 	if (transparent1Data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, transparent1Width, transparent1Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, transparent1Data);
@@ -482,8 +488,8 @@ int main() {
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char * data = stbi_load("../Textures/glassTex2.png", &width, &height, &nrChan, STBI_rgb_alpha);
+	stbi_set_flip_vertically_on_load(false);
+	unsigned char * data = stbi_load("../Textures/earthDiffuseMap.png", &width, &height, &nrChan, STBI_rgb_alpha);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -498,19 +504,11 @@ int main() {
 
 #pragma endregion textures
 
-	glm::mat4 cubeTransform = glm::mat4(1);
 
 	glm::mat4 bgTrans = glm::mat4(1);
 	glm::mat4 bgModel = glm::mat4(1);
 	bgModel = glm::rotate(bgModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
 
-	glm::mat4 cubeModel = glm::mat4(1.0f);
-	Surface surface(225, 225, true);
-	glm::mat4 surfaceModel = glm::mat4(1);
-	glm::mat4 surfaceTransform = glm::mat4(1);
-	surfaceTransform = glm::translate(surfaceTransform, glm::vec3(-125, 0, 125));
-	surfaceTransform = glm::rotate(surfaceTransform, glm::radians(-90.0f), glm::vec3(1.0, 0, 0));
-	surfaceTransform = glm::scale(surfaceTransform, glm::vec3(555,355,355));
 
 	Surface mouseSurface(4, 4, true);
 	glm::mat4 mouseSurfaceModel = glm::mat4(1);
@@ -551,21 +549,40 @@ int main() {
 
 
 
+	backgroundShaderProgram.setBool("worldCoordinates", false);
 
 
 
 	cubeShaderProgram.setInt("material.diffuse", 0);
 	cubeShaderProgram.setInt("material.specular", 1);
-
-
-
-
-	backgroundShaderProgram.setBool("worldCoordinates", false);
-
 	cubeShaderProgram.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
+
+
+
+
+
+
+	Surface surface(100, 100, true);
+	glm::mat4 surfaceModel = glm::mat4(1);
+	glm::mat4 surfaceTransform = glm::mat4(1);
+	surfaceModel = glm::translate(surfaceModel, glm::vec3(-50, 0, -50));
+
+	surfaceModel = glm::scale(surfaceModel, glm::vec3(100, 100, 100));
+
+
+
+
+
+
+
+
+	glm::mat4 cubeModel = glm::scale(glm::mat4(1.0f),glm::vec3(1.0));
+	cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), glm::vec3(0, 1, 0));
+	glm::mat4 cubeTransform = glm::mat4(1.0f);
 
 	while (!glfwWindowShouldClose(mWind))
 	{
+
 
 #pragma region Essential Render Events
 		float currentFrame = glfwGetTime();
@@ -575,25 +592,140 @@ int main() {
 		//std::cout << "FPS: " << (1.0f / deltaTime) << std::endl;
 		glfwPollEvents();
 		processInput(mWind);
-		mainWindow->clearColor(0.0025, 0, 0.01, 0.4);
+		mainWindow->clearColor(0.0025, 0, 0.035, 0.4);
 
 
 		glm::mat4 view = camera.GetViewMatrix();
-		projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 100.0f); // MAY NOT BE ESSENTIAL - ONLY ON ZOOM CHANGE?
+		projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.001f, 100.0f); // MAY NOT BE ESSENTIAL - ONLY ON ZOOM CHANGE?
 
 
 		glm::vec3 lightSourceColor = glm::normalize(rayColor);
 		glm::mat4 lightSourceModel = glm::mat4(1);
 		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition);
 		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.01f));
-
 #pragma endregion
+
+#pragma region draw background
+/*
+		backgroundShaderProgram.use();
+		backgroundShaderProgram.setBool("worldCoordinates", false);
+		backgroundShaderProgram.setMat4("view", view);
+		backgroundShaderProgram.setMat4("projection", projection);
+		backgroundShaderProgram.setMat4("transform", bgTrans);
+		backgroundShaderProgram.setMat4("model", bgModel);
+
+		glBindVertexArray(bgVAO);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glBindTexture(GL_TEXTURE_2D, transparentTex1);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(0);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		*/
+#pragma endregion
+
+
+
+
+		// Draw point lights
+
+		glm::vec3 pointLightColor = glm::normalize(rayColor);
+		glm::vec3 pointLightColor1 = glm::normalize(rayColor2);
+		glm::vec3 pointLightColor2 = glm::normalize(rayColor3);
+		glm::vec3 pointLightColor3 = glm::normalize(rayColor4);
+		glm::vec3 cubePos = glm::vec3(cubeTransform*glm::vec4(1));
+		glm::vec3 lanternSourcePosition = cubePos + glm::vec3(-0.5, -0.5, -1.5);
+
+		glBindVertexArray(lightSourceVAO);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		lightSourceShaderProgram.use();
+		lightSourceShaderProgram.setInt("tex1", 0);
+		lightSourceShaderProgram.setMat4("view", view);
+		lightSourceShaderProgram.setMat4("projection", projection);
+		lightSourceShaderProgram.setMat4("transform", lightSourceTransform);
+		lightSourceShaderProgram.setFloat("time", timeValue);
+		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor);
+		lightSourceModel = glm::mat4(1);
+		lightSourceModel = glm::translate(lightSourceModel, lanternSourcePosition);
+		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.025f));
+		lightSourceShaderProgram.setMat4("model", lightSourceModel);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor1);
+
+		lightSourceModel = glm::mat4(1);
+		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition + glm::vec3(5, 0, 0));
+		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.025f));
+		lightSourceShaderProgram.setMat4("model", lightSourceModel);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor2);
+
+		lightSourceModel = glm::mat4(1);
+		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition + glm::vec3(11, 0, 0));
+		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.025f));
+		lightSourceShaderProgram.setMat4("model", lightSourceModel);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor3);
+
+		lightSourceModel = glm::mat4(1);
+		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition + glm::vec3(15, 0, 0));
+		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.025f));
+		lightSourceShaderProgram.setMat4("model", lightSourceModel);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(0);
+
+
 
 
 #pragma region draw light source
 
 		// Draw The "Ground" Surface Grid
+
+		/* SET ALL THE NEW LIGHTING UNIFORMS*/
+		cubeShaderProgram.setVec3("viewPosition", camera.Position);
+
+		// Set the material uniforms
+		cubeShaderProgram.setFloat("material.shininess", 64.0);
+		// Set the point source uniforms
+		// P 1
 		surfaceShader.use();
+		surfaceShader.setInt("heightTex", 0);
+		surfaceShader.setInt("material.diffuse", 1);
+		surfaceShader.setInt("material.specular", 2);
+		surfaceShader.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
+
+		surfaceShader.setVec3("pointLights[0].ambient", 0.2f* pointLightColor);
+		surfaceShader.setVec3("pointLights[0].diffuse", .6f * pointLightColor); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[0].specular", 1.0f * pointLightColor);
+		surfaceShader.setVec3("pointLights[0].position", lanternSourcePosition);
+		// P 2
+		surfaceShader.setVec3("pointLights[1].ambient", 0.2f* pointLightColor1);
+		surfaceShader.setVec3("pointLights[1].diffuse", .6f * pointLightColor1); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[1].specular", 1.0f * pointLightColor1);
+		surfaceShader.setVec3("pointLights[1].position", lightSourcePosition + glm::vec3(5, 0, 0));
+		// P 3
+		surfaceShader.setVec3("pointLights[2].ambient", 0.2f* pointLightColor2);
+		surfaceShader.setVec3("pointLights[2].diffuse", .6f * pointLightColor2); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[2].specular", 1.0f * pointLightColor2);
+		surfaceShader.setVec3("pointLights[2].position", lightSourcePosition + glm::vec3(11, 0, 0));
+		// P 4
+		surfaceShader.setVec3("pointLights[3].ambient", 0.2f* pointLightColor3);
+		surfaceShader.setVec3("pointLights[3].diffuse", .6f * pointLightColor3); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[3].specular", 1.0f * pointLightColor3);
+		surfaceShader.setVec3("pointLights[3].position", lightSourcePosition + glm::vec3(15, 0, 0));
+
+
+		// Set the flashLight source uniforms6
+		surfaceShader.setVec3("flashLight.position", rayPosition);
+		surfaceShader.setVec3("flashLight.direction", rayDirection);
+
+		/* ------------------------------- */
+
+
+
 		surfaceShader.setMat4("view", view);
 		surfaceShader.setMat4("projection", projection);
 		surfaceShader.setMat4("transform", surfaceTransform);
@@ -604,23 +736,13 @@ int main() {
 		surfaceShader.setVec3("clickPoint", destination);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, heightMap);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerSpecularMap);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, heightMap);
 		surface.Draw();
 
 
-		glBindVertexArray(lightSourceVAO);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		lightSourceShaderProgram.use();
-		lightSourceShaderProgram.setInt("tex1", 0);
-		lightSourceShaderProgram.setMat4("view", view);
-		lightSourceShaderProgram.setMat4("projection", projection);
-		lightSourceShaderProgram.setMat4("transform", lightSourceTransform);
-		lightSourceShaderProgram.setMat4("model", lightSourceModel);
-		lightSourceShaderProgram.setFloat("time", timeValue);
-		lightSourceShaderProgram.setVec3("lightSourceColor", lightSourceColor);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(0);
 #pragma endregion
 
 #pragma region cube drawing
@@ -633,13 +755,30 @@ int main() {
 
 		// Set the material uniforms
 		cubeShaderProgram.setFloat("material.shininess", 64.0);
+		// Set the point source uniforms
+		// P 1
 
-		// Set the light source uniforms
-		cubeShaderProgram.setVec3("pointLight.ambient",  0.2f* lightSourceColor);
-		cubeShaderProgram.setVec3("pointLight.diffuse", .6f * lightSourceColor); // darken diffuse light a bit
-		cubeShaderProgram.setVec3("pointLight.specular", 1.0f * lightSourceColor);
-		cubeShaderProgram.setVec3("pointLight.position", lightSourcePosition);
-		
+		cubeShaderProgram.setVec3("pointLights[0].ambient",  0.2f* pointLightColor);
+		cubeShaderProgram.setVec3("pointLights[0].diffuse", .6f * pointLightColor); // darken diffuse light a bit
+		cubeShaderProgram.setVec3("pointLights[0].specular", 1.0f * pointLightColor);
+		cubeShaderProgram.setVec3("pointLights[0].position", lanternSourcePosition);
+		// P 2
+		cubeShaderProgram.setVec3("pointLights[1].ambient", 0.2f* pointLightColor1);
+		cubeShaderProgram.setVec3("pointLights[1].diffuse", .6f * pointLightColor1); // darken diffuse light a bit
+		cubeShaderProgram.setVec3("pointLights[1].specular", 1.0f * pointLightColor1);
+		cubeShaderProgram.setVec3("pointLights[1].position", lightSourcePosition + glm::vec3(5,0,0));
+		// P 3
+		cubeShaderProgram.setVec3("pointLights[2].ambient", 0.2f* pointLightColor2);
+		cubeShaderProgram.setVec3("pointLights[2].diffuse", .6f * pointLightColor2); // darken diffuse light a bit
+		cubeShaderProgram.setVec3("pointLights[2].specular", 1.0f * pointLightColor2);
+		cubeShaderProgram.setVec3("pointLights[2].position", lightSourcePosition + glm::vec3(11, 0, 0));
+		// P 4
+		cubeShaderProgram.setVec3("pointLights[3].ambient", 0.2f* pointLightColor3);
+		cubeShaderProgram.setVec3("pointLights[3].diffuse", .6f * pointLightColor3); // darken diffuse light a bit
+		cubeShaderProgram.setVec3("pointLights[3].specular", 1.0f * pointLightColor3);
+		cubeShaderProgram.setVec3("pointLights[3].position", lightSourcePosition + glm::vec3(15, 0, 0));
+
+
 		// Set the flashLight source uniforms6
 		cubeShaderProgram.setVec3("flashLight.position", rayPosition);
 		cubeShaderProgram.setVec3("flashLight.direction", rayDirection);
@@ -665,23 +804,79 @@ int main() {
 
 		glBindTexture(GL_TEXTURE1, 0);
 		for (int i = 0; i < userBlocks.size(); i++) {
-			
+
+
+			if (cubePos.y > .95)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, -0.001f, 0));
+			if (cubePos.y < .90)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, 0.001f, 0));
+
 			float modelZBoundInWorld = myFirstModel.zBound*.1 + userBlocks.at(i).z;
-
+			glm::mat4 modelMat = glm::mat4(1);
 			if (destination != glm::vec3(NULL)) {
-				std::cout << "Destination : " << "( " << destination.x << ", " << destination.y << ", " << destination.z << " )" << std::endl;
 
-				glm::vec3 travelDirection = glm::normalize(destination - userBlocks.at(i));
-				std::cout << "travelDirection : " << "( " << travelDirection.x << ", " << travelDirection.y << ", " << travelDirection.z << " )" << std::endl;
+				glm::vec3 travelDirection = glm::normalize(destination - cubePos);
 
-				if (userBlocks.at(i).x != destination.x) userBlocks.at(i).x += 0.01f * travelDirection.x;
-				if (userBlocks.at(i).z != destination.z) userBlocks.at(i).z += 0.01f * travelDirection.z;
+
+				if (userBlocks.at(i).x != destination.x) userBlocks.at(i).x += 0.001f * travelDirection.x;
+				if (userBlocks.at(i).z != destination.z) userBlocks.at(i).z += 0.001f * travelDirection.z;
+
+				glm::vec3 boatVec = glm::vec3(cubeModel*glm::vec4(1));
+				glm::vec2 originVec(0, -1);
+				glm::vec2 v1 = glm::vec2(cubePos.x + boatVec.x, cubePos.z + boatVec.z);
+				glm::vec2 v2 = glm::vec2(destination.x, destination.z);
+
+				float cosTheta = glm::dot(originVec,v1)/(glm::length(originVec)*glm::length(v1));
+				float cosPhi = glm::dot(originVec,v2)/(glm::length(originVec)*glm::length(v2));
+
+
+				float degTheta = glm::degrees(acosf(cosTheta));
+				float degPhi = glm::degrees(acosf(cosPhi));
+
+				// Rotate left
+				if (abs(degTheta - degPhi) > 2) {
+					if (degTheta < degPhi) {
+						cubeModel = glm::rotate(cubeModel, glm::radians(0.1f), glm::vec3(0, 1, 0));
+					}
+
+					// Rotate right
+					if (degTheta > degPhi) {
+						cubeModel = glm::rotate(cubeModel, glm::radians(-0.1f), glm::vec3(0, 1, 0));
+
+
+					}
+				}
+
+
+
+
+				if (rayDirection == glm::vec3(0))
+				{
+					std::cout << "----------------------------------------" << std::endl;
+					std::cout << "Destination degrees from origin: " << glm::degrees(acosf(cosPhi)) << std::endl;
+					std::cout << "Boat + stern degrees from origin: " << glm::degrees(acosf(cosTheta)) << std::endl;
+					//std::cout << "Path dir is: " << "( " << travelDirection.x << "," << travelDirection.y << "," << travelDirection.z << " )" << std::endl;
+					//std::cout << "Dest dir is: " << "( " << destination.x << "," << destination.y << "," << destination.z << " )" << std::endl;
+				}
+
+				cubeTransform = glm::translate(cubeTransform, 0.0025f*glm::vec3(travelDirection.x, 0, travelDirection.z));
+				//camera.Position.x += 0.0025f*travelDirection.x;
+				//camera.Position.z += 0.0025f*travelDirection.z;
+				cubeShaderProgram.setMat4("model", cubeModel);
+				cubeShaderProgram.setMat4("transform", cubeTransform);				
+				
+				myFirstModel.Draw(cubeShaderProgram);
+
 			}
 		
-			if (userBlocks.at(i).y > 0.95) userBlocks.at(i).y -= 0.01f;
-			cubeModel = glm::rotate(cubeModel,glm::radians(0.1f*timeValue),glm::vec3(0,0,1));
-			cubeShaderProgram.setMat4("model", glm::scale(glm::rotate(glm::translate(glm::mat4(1), userBlocks.at(i)),glm::radians(userBlocks.at(i).y > 1 ? 0.0f : 0.0f),glm::vec3(1,0,0)),glm::vec3(0.1)));
-			myFirstModel.Draw(cubeShaderProgram);
+			else {
+				//cubeModel = glm::rotate(cubeModel, glm::radians(0.025f), glm::vec3(0, 1, 0));
+
+				//cubeTransform = glm::translate(cubeTransform, glm::vec3(0.0025, 0, 0.0025));
+
+				cubeShaderProgram.setMat4("model", cubeModel);
+				cubeShaderProgram.setMat4("transform", cubeTransform);
+				myFirstModel.Draw(cubeShaderProgram);
+
+			}
 		//	std::cout << "X bound : " << myFirstModel.xBound*.1 + userBlocks.at(i).x << std::endl;
 		//	std::cout << "Z bound : " << myFirstModel.zBound*.1 + userBlocks.at(i).z << std::endl;
 

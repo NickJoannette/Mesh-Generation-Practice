@@ -32,7 +32,7 @@ GLFWwindow * mWind = mainWindow->glWindow();
 Camera camera(glm::vec3(0,1,0));
 
 Model myFirstModel = Model("../Models/myTests/rowboat.obj");
-glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.001f, 1000.0f);
+glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f);
 
 std::vector<glm::vec3> userBlocks;
 glm::vec3 lightSourcePosition = glm::vec3(4.75, 2.5, 4.75);
@@ -44,6 +44,7 @@ glm::vec3 rayColor2 = glm::vec3(1);
 glm::vec3 rayColor3 = glm::vec3(1);
 glm::vec3 rayColor4 = glm::vec3(1);
 
+glm::mat4 cubeTransform = glm::mat4(1.0f);
 glm::vec3 destination = glm::vec3(0,0,0);
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -62,10 +63,13 @@ void processInput(GLFWwindow *window)
 
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
-		camera.MovementSpeed -= .001f;
+		camera.MovementSpeed -= .1f;
 
 	if (glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
-		camera.MovementSpeed += .001f;
+		camera.MovementSpeed += .1f;
+
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		if (!userBlocks.empty()) camera.Position = (glm::vec3(0,1,1) + glm::vec3(cubeTransform*glm::vec4(1)));
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -215,7 +219,31 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
+void load2DWrappedMipMapTexture(const char * path, unsigned int * addr, bool flipVertically) {
+	glGenTextures(1, addr);
+	glBindTexture(GL_TEXTURE_2D, *addr);
 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	int width, height, nrChan;
+	if (flipVertically) stbi_set_flip_vertically_on_load(true);
+	unsigned char *data = stbi_load(path, &width, &height, &nrChan, STBI_rgb_alpha);
+
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
 
 
 int main() {
@@ -319,53 +347,13 @@ int main() {
 	glBindVertexArray(0);
 
 	unsigned int backgroundTexture;
-	glGenTextures(1, &backgroundTexture);
-	glBindTexture(GL_TEXTURE_2D, backgroundTexture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	int bgWidth, bgHeight, bgNrChan;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char *bgData = stbi_load("../Textures/cursor1.png", &bgWidth, &bgHeight, &bgNrChan, STBI_rgb_alpha);
-
-	if (bgData)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bgWidth, bgHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, bgData);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(bgData);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
+	load2DWrappedMipMapTexture("../Textures/cursor1.png", &backgroundTexture, true);
+	
 	unsigned int heightMap;
-	glGenTextures(1, &heightMap);
-	glBindTexture(GL_TEXTURE_2D, heightMap);
+	load2DWrappedMipMapTexture("../Textures/earthHeightMap.png", &heightMap, true);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	int bumpMapWidth, bumpMapHeight, bumpMapNrChan;
-	stbi_set_flip_vertically_on_load(false);
-	unsigned char *bumpMapData = stbi_load("../Textures/earthHeightMap.png", &bumpMapWidth, &bumpMapHeight, &bumpMapNrChan, STBI_rgb_alpha);
-	if (bgData)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bumpMapWidth, bumpMapHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, bumpMapData);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(bumpMapData);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	unsigned int earthDiffuseMap;
+	load2DWrappedMipMapTexture("../Textures/earthDiffuseMap.png", &earthDiffuseMap, true);
 #pragma endregion 
 
 #pragma region cube buffer objects
@@ -426,85 +414,6 @@ int main() {
 #pragma endregion
 
 
-#pragma region textures
-
-	unsigned int transparentTex1;
-	glGenTextures(1, &transparentTex1);
-	glBindTexture(GL_TEXTURE_2D, transparentTex1);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	int transparent1Width, transparent1Height, transparent1NrChan;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char *transparent1Data = stbi_load("../Textures/scenery1.jpg", &transparent1Width, &transparent1Height, &transparent1NrChan, STBI_rgb_alpha);
-	if (transparent1Data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, transparent1Width, transparent1Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, transparent1Data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-		int x = 4;
-	}
-	stbi_image_free(transparent1Data);
-
-	unsigned int woodAndSteelContainerTexture;
-	glGenTextures(1, &woodAndSteelContainerTexture);
-	glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerTexture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	int mountainWidth, mountainHeight, mountainNrChan;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char *mountainData = stbi_load("../Textures/missle1.jpg", &mountainWidth, &mountainHeight, &mountainNrChan, STBI_rgb_alpha);
-	if (mountainData)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mountainWidth, mountainHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, mountainData);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(mountainData);
-
-	int width, height, nrChan;
-
-
-	unsigned int woodAndSteelContainerSpecularMap;
-	glGenTextures(1, &woodAndSteelContainerSpecularMap);
-	glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerSpecularMap);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	stbi_set_flip_vertically_on_load(false);
-	unsigned char * data = stbi_load("../Textures/earthDiffuseMap.png", &width, &height, &nrChan, STBI_rgb_alpha);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(data);
-
-
-#pragma endregion textures
-
-
 	glm::mat4 bgTrans = glm::mat4(1);
 	glm::mat4 bgModel = glm::mat4(1);
 	bgModel = glm::rotate(bgModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
@@ -513,6 +422,8 @@ int main() {
 	Surface mouseSurface(4, 4, true);
 	glm::mat4 mouseSurfaceModel = glm::mat4(1);
 	glm::mat4 mouseSurfaceTransform = glm::mat4(1);
+
+
 	backgroundShaderProgram.setMat4("model", mouseSurfaceModel);
 
 	glm::mat4 lightSourceTransform = glm::mat4(1);
@@ -562,12 +473,12 @@ int main() {
 
 
 
-	Surface surface(100, 100, true);
+	Surface surface(750, 700, true);
 	glm::mat4 surfaceModel = glm::mat4(1);
 	glm::mat4 surfaceTransform = glm::mat4(1);
-	surfaceModel = glm::translate(surfaceModel, glm::vec3(-50, 0, -50));
+	surfaceModel = glm::translate(surfaceModel, glm::vec3(-7500, 0, -4500));
 
-	surfaceModel = glm::scale(surfaceModel, glm::vec3(100, 100, 100));
+	surfaceModel = glm::scale(surfaceModel, glm::vec3(15000, 9000, 9000));
 
 
 
@@ -578,7 +489,6 @@ int main() {
 
 	glm::mat4 cubeModel = glm::scale(glm::mat4(1.0f),glm::vec3(1.0));
 	cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), glm::vec3(0, 1, 0));
-	glm::mat4 cubeTransform = glm::mat4(1.0f);
 
 	while (!glfwWindowShouldClose(mWind))
 	{
@@ -596,7 +506,7 @@ int main() {
 
 
 		glm::mat4 view = camera.GetViewMatrix();
-		projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.001f, 100.0f); // MAY NOT BE ESSENTIAL - ONLY ON ZOOM CHANGE?
+		projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f); // MAY NOT BE ESSENTIAL - ONLY ON ZOOM CHANGE?
 
 
 		glm::vec3 lightSourceColor = glm::normalize(rayColor);
@@ -647,31 +557,32 @@ int main() {
 		lightSourceShaderProgram.setMat4("projection", projection);
 		lightSourceShaderProgram.setMat4("transform", lightSourceTransform);
 		lightSourceShaderProgram.setFloat("time", timeValue);
+
 		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor);
 		lightSourceModel = glm::mat4(1);
 		lightSourceModel = glm::translate(lightSourceModel, lanternSourcePosition);
 		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.025f));
 		lightSourceShaderProgram.setMat4("model", lightSourceModel);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor1);
 
+		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor1);
 		lightSourceModel = glm::mat4(1);
 		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition + glm::vec3(5, 0, 0));
-		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.025f));
+		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(1.0f));
 		lightSourceShaderProgram.setMat4("model", lightSourceModel);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor2);
 
+		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor2);
 		lightSourceModel = glm::mat4(1);
 		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition + glm::vec3(11, 0, 0));
-		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.025f));
+		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(1.0f));
 		lightSourceShaderProgram.setMat4("model", lightSourceModel);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor3);
 
+		lightSourceShaderProgram.setVec3("lightSourceColor", pointLightColor3);
 		lightSourceModel = glm::mat4(1);
 		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition + glm::vec3(15, 0, 0));
-		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.025f));
+		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(1.0f));
 		lightSourceShaderProgram.setMat4("model", lightSourceModel);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDisableVertexAttribArray(1);
@@ -699,22 +610,22 @@ int main() {
 
 		surfaceShader.setVec3("pointLights[0].ambient", 0.2f* pointLightColor);
 		surfaceShader.setVec3("pointLights[0].diffuse", .6f * pointLightColor); // darken diffuse light a bit
-		surfaceShader.setVec3("pointLights[0].specular", 1.0f * pointLightColor);
+		surfaceShader.setVec3("pointLights[0].specular", 5.0f * pointLightColor);
 		surfaceShader.setVec3("pointLights[0].position", lanternSourcePosition);
 		// P 2
 		surfaceShader.setVec3("pointLights[1].ambient", 0.2f* pointLightColor1);
-		surfaceShader.setVec3("pointLights[1].diffuse", .6f * pointLightColor1); // darken diffuse light a bit
-		surfaceShader.setVec3("pointLights[1].specular", 1.0f * pointLightColor1);
+		surfaceShader.setVec3("pointLights[1].diffuse", 3.0f * pointLightColor1); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[1].specular", 5.0f * pointLightColor1);
 		surfaceShader.setVec3("pointLights[1].position", lightSourcePosition + glm::vec3(5, 0, 0));
 		// P 3
 		surfaceShader.setVec3("pointLights[2].ambient", 0.2f* pointLightColor2);
-		surfaceShader.setVec3("pointLights[2].diffuse", .6f * pointLightColor2); // darken diffuse light a bit
-		surfaceShader.setVec3("pointLights[2].specular", 1.0f * pointLightColor2);
+		surfaceShader.setVec3("pointLights[2].diffuse", 3.0f * pointLightColor2); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[2].specular", 5.0f * pointLightColor2);
 		surfaceShader.setVec3("pointLights[2].position", lightSourcePosition + glm::vec3(11, 0, 0));
 		// P 4
 		surfaceShader.setVec3("pointLights[3].ambient", 0.2f* pointLightColor3);
-		surfaceShader.setVec3("pointLights[3].diffuse", .6f * pointLightColor3); // darken diffuse light a bit
-		surfaceShader.setVec3("pointLights[3].specular", 1.0f * pointLightColor3);
+		surfaceShader.setVec3("pointLights[3].diffuse", 3.0f * pointLightColor3); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[3].specular", 5.0f * pointLightColor3);
 		surfaceShader.setVec3("pointLights[3].position", lightSourcePosition + glm::vec3(15, 0, 0));
 
 
@@ -737,7 +648,7 @@ int main() {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, heightMap);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerSpecularMap);
+		glBindTexture(GL_TEXTURE_2D, earthDiffuseMap);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, heightMap);
 		surface.Draw();
@@ -796,14 +707,8 @@ int main() {
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerTexture);
-
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, woodAndSteelContainerSpecularMap);
-
 		glBindTexture(GL_TEXTURE1, 0);
-		for (int i = 0; i < userBlocks.size(); i++) {
+		for (int i = 0; i <(userBlocks.size() >= 1 ? 1 : 0); i++) {
 
 
 			if (cubePos.y > .95)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, -0.001f, 0));
@@ -815,10 +720,6 @@ int main() {
 
 				glm::vec3 travelDirection = glm::normalize(destination - cubePos);
 
-
-				if (userBlocks.at(i).x != destination.x) userBlocks.at(i).x += 0.001f * travelDirection.x;
-				if (userBlocks.at(i).z != destination.z) userBlocks.at(i).z += 0.001f * travelDirection.z;
-
 				glm::vec3 boatVec = glm::vec3(cubeModel*glm::vec4(1));
 				glm::vec2 originVec(0, -1);
 				glm::vec2 v1 = glm::vec2(cubePos.x + boatVec.x, cubePos.z + boatVec.z);
@@ -826,7 +727,6 @@ int main() {
 
 				float cosTheta = glm::dot(originVec,v1)/(glm::length(originVec)*glm::length(v1));
 				float cosPhi = glm::dot(originVec,v2)/(glm::length(originVec)*glm::length(v2));
-
 
 				float degTheta = glm::degrees(acosf(cosTheta));
 				float degPhi = glm::degrees(acosf(cosPhi));
@@ -841,23 +741,23 @@ int main() {
 					if (degTheta > degPhi) {
 						cubeModel = glm::rotate(cubeModel, glm::radians(-0.1f), glm::vec3(0, 1, 0));
 
-
 					}
 				}
 
 
-
+				/*
 
 				if (rayDirection == glm::vec3(0))
 				{
 					std::cout << "----------------------------------------" << std::endl;
 					std::cout << "Destination degrees from origin: " << glm::degrees(acosf(cosPhi)) << std::endl;
 					std::cout << "Boat + stern degrees from origin: " << glm::degrees(acosf(cosTheta)) << std::endl;
-					//std::cout << "Path dir is: " << "( " << travelDirection.x << "," << travelDirection.y << "," << travelDirection.z << " )" << std::endl;
-					//std::cout << "Dest dir is: " << "( " << destination.x << "," << destination.y << "," << destination.z << " )" << std::endl;
+					std::cout << "Path dir is: " << "( " << travelDirection.x << "," << travelDirection.y << "," << travelDirection.z << " )" << std::endl;
+					std::cout << "Dest dir is: " << "( " << destination.x << "," << destination.y << "," << destination.z << " )" << std::endl;
 				}
+					*/
 
-				cubeTransform = glm::translate(cubeTransform, 0.0025f*glm::vec3(travelDirection.x, 0, travelDirection.z));
+				cubeTransform = glm::translate(cubeTransform, 0.025f*glm::vec3(travelDirection.x, 0, travelDirection.z));
 				//camera.Position.x += 0.0025f*travelDirection.x;
 				//camera.Position.z += 0.0025f*travelDirection.z;
 				cubeShaderProgram.setMat4("model", cubeModel);
@@ -901,6 +801,8 @@ int main() {
 		mouseSurfaceTransform = glm::translate(glm::mat4(1), glm::vec3(((visibleCursorX - (SCR_WIDTH/2)) * 2 / SCR_WIDTH), 
 			((visibleCursorY - (SCR_HEIGHT / 2)) * 2 / SCR_HEIGHT),
 			0.0));
+		mouseSurfaceTransform = glm::rotate(mouseSurfaceTransform, glm::radians(180.0f), glm::vec3(1, 0, 0));
+
 		mouseSurfaceTransform = glm::scale(mouseSurfaceTransform, glm::vec3(0.02, 0.02, 0.02));
 		
 		backgroundShaderProgram.setMat4("transform", mouseSurfaceTransform);

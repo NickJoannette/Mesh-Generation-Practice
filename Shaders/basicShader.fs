@@ -65,18 +65,21 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     return (ambient + diffuse + specular);
 }  
 
-vec3 CalcPointLight (PointLight light, vec3 fragPosition) {
+vec3 CalcPointLight (PointLight light, vec3 fragPosition, int index) {
 
 	// Calculate attenuation factor based on distance from the light to this fragment	
 	float fragToLightDistance = length(light.position - fragPosition);
 	float attenuationFactor = (1.0)/(1.0 + 0.09*fragToLightDistance + 0.032*(fragToLightDistance * fragToLightDistance));
 
 	// Ambient 
-	vec3 ambientLight = attenuationFactor*light.ambient ;
+	float ambientAttenuationFactor =  (1.0)/(1.0 + 0.02*fragToLightDistance);
+	vec3 ambientLight = vec3(0,0,0);
+	if (index > 0) ambientLight =  ambientAttenuationFactor*light.ambient;
+	else ambientLight = attenuationFactor * ambientLight ;
 	
 	vec3 diffuseLight = attenuationFactor*light.diffuse;
 	
-	return (0.2*ambientLight + 0.5*diffuseLight);
+	return (ambientLight + diffuseLight);
 }
 
 vec3 CalcFlashLight (FlashLight light, vec3 normal, vec3 viewDir) {
@@ -114,6 +117,15 @@ vec3 CalcFlashLight (FlashLight light, vec3 normal, vec3 viewDir) {
 out vec4 FragColor;
 
 
+float near = 0.1; 
+float far  = 2500.0; 
+  
+float LinearizeDepth(float depth) 
+{
+    float z = depth * 2.0 - 1.0; // back to NDC 
+    return (2.0 * near * far) / (far + near - z * (far - near));	
+}
+
 
 void main()
 {
@@ -141,7 +153,7 @@ vec3 color = vec3(r,g,b);
 // Define static direction light source for now
 	DirLight dirLight;
 	dirLight.direction = vec3(0,-1,0);
-	dirLight.ambient = vec3(0.13,0.13,0.13);
+	dirLight.ambient = vec3(0.7,0.7,0.7);
 	dirLight.diffuse = vec3(0.55,0.55,0.55);
 	dirLight.specular = vec3(0.01,0.01,0.01);
 
@@ -159,12 +171,13 @@ vec3 color = vec3(r,g,b);
 	
 	vec3 pointResult = vec3(0,0,0);
 	    for(int i = 0; i < NR_POINT_LIGHTS; i++)
-        pointResult += CalcPointLight(pointLights[i],fragPosition);    
+        pointResult += CalcPointLight(pointLights[i],fragPosition,i);    
 	
 	vec3 combinedResult = pointResult + (color * lightingResult);
-	if (abs(fragPosition.z - clickPoint.z) < 0.025) combinedResult.r = 1.0;
-if (abs(fragPosition.x - clickPoint.x) < 0.025){ combinedResult.g = 1.0;}
+	if (abs(fragPosition.z - clickPoint.z) < 0.025) {combinedResult = vec3(1,1,1);}
+if (abs(fragPosition.x - clickPoint.x) < 0.025){combinedResult = vec3(1,1,1);}
 	
-FragColor = vec4( combinedResult, 1);	
+	 float depth = LinearizeDepth(gl_FragCoord.z)/2500.0f;
+	FragColor = vec4(combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth),1);
 	
 };

@@ -23,7 +23,7 @@ void main()
 
 	texCoord = aTexCoord;
 	fragHeight = (texture(heightTex, texCoord).r);
-	//if (fragHeight <0.02) fragHeight += 0.0012*sin(0.1*time/aPos.x);
+	//if (fragHeight <0.02) fragHeight += 0.012*sin(0.1*time/aPos.x);
 	float height = (fragHeight/255.0)*35.50;
 	
 	gl_Position = projection * view * model * transform * vec4(vec3(aPos.x,height,aPos.z), 1.0);

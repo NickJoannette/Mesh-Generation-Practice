@@ -127,6 +127,39 @@ float LinearizeDepth(float depth)
 }
 
 
+
+
+
+
+
+
+
+
+int getQuadrant(vec3 position, vec3 origin) {
+
+	float x = position.x;
+	float z = position.z;
+	if (x >= origin.x && z <= origin.z) return 1;
+	else if (x <= origin.x && z <= origin.z) return 2;
+	else if (x <= origin.x && z > origin.z) return 3;
+	else if (x >= origin.x && z > origin.z) return 4;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+uniform vec3 modelPosition;
+uniform vec3 modelFront;
+uniform vec3 travelDir;
 void main()
 {
 float r = 0.888*fragHeight;
@@ -174,8 +207,89 @@ vec3 color = vec3(r,g,b);
         pointResult += CalcPointLight(pointLights[i],fragPosition,i);    
 	
 	vec3 combinedResult = pointResult + (color * lightingResult);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	vec3 origin = vec3(0,0,0);
+	
+/*	
+	int quadrant = getQuadrant(clickPoint, origin);
+	if (quadrant == 1) {
+		if (dot(normalize(fragPosition.xz),vec2(1,0)) >= dot(normalize(clickPoint.xz),vec2(1,0)) &&
+		
+		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
+
+		getQuadrant(fragPosition,origin) == 1) combinedResult = vec3(0.0,0.0,0.65);
+	
+	}
+	
+	else if (quadrant == 2) {
+	
+		if (dot(normalize(fragPosition.xz),vec2(1,0)) <= dot(normalize(clickPoint.xz),vec2(1,0)) &&
+		
+		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
+
+		getQuadrant(fragPosition,origin) == 2) combinedResult = vec3(0.65,0.65,0.0);
+	}
+
+	else if (quadrant == 3) {
+		if (dot(normalize(fragPosition.xz),vec2(1,0)) <= dot(normalize(clickPoint.xz),vec2(1,0)) &&
+		
+		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
+
+		getQuadrant(fragPosition,origin) == 3) combinedResult = vec3(0.0,0.65,0.0);
+	
+	}
+	
+	else if (quadrant == 4) {
+		if (dot(normalize(fragPosition.xz),vec2(1,0)) >= dot(normalize(clickPoint.xz),vec2(1,0)) &&
+		
+		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
+
+		getQuadrant(fragPosition,origin) == 4) combinedResult = vec3(0.65,0.0,0.65);
+	
+	}
+	
+*/
+	
 	if (abs(fragPosition.z - clickPoint.z) < 0.025) {combinedResult = vec3(1,1,1);}
-if (abs(fragPosition.x - clickPoint.x) < 0.025){combinedResult = vec3(1,1,1);}
+	if (abs(fragPosition.x - clickPoint.x) < 0.025){combinedResult = vec3(1,1,1);}
+	
+	// Draw the x/y origin axes
+	
+	if (abs(fragPosition.z - origin.z) < 0.1) {combinedResult = vec3(0,1,0);}
+	if (abs(fragPosition.x - origin.x) < 0.1){combinedResult = vec3(0,1,0);}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	 float depth = LinearizeDepth(gl_FragCoord.z)/2500.0f;
 	FragColor = vec4(combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth),1);

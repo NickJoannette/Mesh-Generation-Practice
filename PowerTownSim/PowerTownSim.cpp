@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <vector>
+#include <glm/gtc/matrix_access.hpp>
 #include "OpenGLWindow.h"
 #include "Camera.h"
 #include "Rendering.h"
@@ -31,7 +32,7 @@ OpenGLWindow * mainWindow = new OpenGLWindow(SCR_WIDTH, SCR_HEIGHT);
 GLFWwindow * mWind = mainWindow->glWindow();
 Camera camera(glm::vec3(0,1,0));
 
-Model myFirstModel = Model("../Models/myTests/rowboat.obj");
+Model myFirstModel = Model("../Models/myTests/camoboat.obj");
 glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f);
 
 std::vector<glm::vec3> userBlocks;
@@ -45,6 +46,8 @@ glm::vec3 rayColor3 = glm::vec3(1);
 glm::vec3 rayColor4 = glm::vec3(1);
 
 glm::mat4 cubeTransform = glm::mat4(1.0f);
+glm::mat4 cubeModel = glm::scale(glm::mat4(1.0f), glm::vec3(1.0));
+
 glm::vec3 destination = glm::vec3(0,0,0);
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -101,6 +104,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
 		lightSourcePosition = camera.Position + camera.Front;
 
+	if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+		glm::vec3 boatVec = glm::vec3(cubeModel*glm::vec4(1));
+
+		glm::vec3 cubePos = glm::vec3(cubeTransform*glm::vec4(1));
+
+
+		std::cout << "Main Model Front Vector: " << "( " << boatVec.x << " , " << boatVec.y << " , " << boatVec.z << " )" << std::endl;
+		std::cout << "Main Model Position Vector: " << "( " << cubePos.x << " , " << cubePos.y << " , " << cubePos.z << " )" << std::endl;
+		std::cout << "Camera Front Vector: " << "( " << camera.Front.x << " , " << camera.Front.y << " , " << camera.Front.z << " )" << std::endl;
+		std::cout << "Camera Position Vector: " << "( " << camera.Position.x << " , " << camera.Position.y << " , " << camera.Position.z << " )" << std::endl;
+
+	}
 
 	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
@@ -245,6 +260,117 @@ void load2DWrappedMipMapTexture(const char * path, unsigned int * addr, bool fli
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+unsigned int loadCubemap(vector<std::string> faces)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+	stbi_set_flip_vertically_on_load(false);
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
+
+
+
+
+
+
+
+
+
+int getRelativeQuadrant(glm::vec2 clickPoint, glm::vec2 origin) {
+
+	float degrees = glm::degrees(acosf(glm::dot(glm::normalize(clickPoint), glm::normalize(origin))));
+
+
+
+
+	std::cout << "-----------------" << std::endl;
+
+
+	if (degrees > 0.1) {
+
+	if (clickPoint.x - origin.x < 0 && degrees > 0) {
+		std::cout << "LEFT" << std::endl;
+		cubeModel = glm::rotate(cubeModel, glm::radians(0.075f), glm::vec3(0, 1, 0));
+	}
+
+
+
+
+
+
+
+	else if (clickPoint.x - origin.x > 0 && degrees > 0) {
+
+		std::cout << "RIGHT" << std::endl;
+		cubeModel = glm::rotate(cubeModel, -glm::radians(0.075f), glm::vec3(0, 1, 0));
+
+	}
+	std::cout << "Degrees: " << degrees << std::endl;
+}
+
+
+	 return 4;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int main() {
 
@@ -321,11 +447,81 @@ int main() {
 	-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,0.0f,  1.0f,  0.0f
 	};
 
+	float skyboxVertices[] = {
+		// positions          
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+
+	Shader skyBoxShader("../Shaders/skyboxShader.vs", "../Shaders/skyboxShader.fs", "T");
 
 	Shader lightSourceShaderProgram("../Shaders/lightSourceShader.vs", "../Shaders/lightSourceShader.fs", "G");
 	Shader cubeShaderProgram("../Shaders/texturedCubeShader.vs", "../Shaders/texturedCubeShader.fs", "G");
 	Shader backgroundShaderProgram("../Shaders/backgroundTextureShader.vs", "../Shaders/backgroundTextureShader.fs", "G");
 	Shader surfaceShader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
+
+
+
+	unsigned int backgroundTexture;
+	load2DWrappedMipMapTexture("../Textures/cursor1.png", &backgroundTexture, true);
+
+	unsigned int heightMap;
+	load2DWrappedMipMapTexture("../Textures/earthHeightMap.png", &heightMap, true);
+
+	unsigned int earthDiffuseMap;
+	load2DWrappedMipMapTexture("../Textures/earthDiffuseMap.png", &earthDiffuseMap, true);
+
+
+	vector<std::string> faces
+	{
+		"../Textures/SkyBox/right.jpg",
+			"../Textures/SkyBox/left.jpg",
+			"../Textures/SkyBox/top.jpg",
+			"../Textures/SkyBox/bottom.jpg",
+			"../Textures/SkyBox/front.jpg",
+			"../Textures/SkyBox/back.jpg"
+	};
+
+	unsigned int cubemapTexture = loadCubemap(faces);
 
 #pragma region background buffer objects
 	unsigned int bgVBO;
@@ -346,15 +542,21 @@ int main() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glBindVertexArray(0);
 
-	unsigned int backgroundTexture;
-	load2DWrappedMipMapTexture("../Textures/cursor1.png", &backgroundTexture, true);
-	
-	unsigned int heightMap;
-	load2DWrappedMipMapTexture("../Textures/earthHeightMap.png", &heightMap, true);
-
-	unsigned int earthDiffuseMap;
-	load2DWrappedMipMapTexture("../Textures/earthDiffuseMap.png", &earthDiffuseMap, true);
 #pragma endregion 
+
+
+#pragma region skybox buffer objects
+	unsigned int skyboxVBO;
+	unsigned int skyboxVAO;
+
+	glGenBuffers(1, &skyboxVBO);
+	glGenVertexArrays(1, &skyboxVAO);
+	glBindVertexArray(skyboxVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glBindVertexArray(0);
+#pragma endregion
 
 #pragma region cube buffer objects
 	unsigned int cubeVBO;
@@ -473,7 +675,7 @@ int main() {
 
 
 
-	Surface surface(750, 700, true);
+	Surface surface(256, 256, true);
 	glm::mat4 surfaceModel = glm::mat4(1);
 	glm::mat4 surfaceTransform = glm::mat4(1);
 	surfaceModel = glm::translate(surfaceModel, glm::vec3(-7500, 0, -4500));
@@ -487,8 +689,7 @@ int main() {
 
 
 
-	glm::mat4 cubeModel = glm::scale(glm::mat4(1.0f),glm::vec3(1.0));
-	cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), glm::vec3(0, 1, 0));
+	//cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), glm::vec3(0, 1, 0));
 
 	while (!glfwWindowShouldClose(mWind))
 	{
@@ -506,7 +707,7 @@ int main() {
 
 
 		glm::mat4 view = camera.GetViewMatrix();
-		projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f); // MAY NOT BE ESSENTIAL - ONLY ON ZOOM CHANGE?
+		projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f); 
 
 
 		glm::vec3 lightSourceColor = glm::normalize(rayColor);
@@ -515,30 +716,31 @@ int main() {
 		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.01f));
 #pragma endregion
 
-#pragma region draw background
-/*
-		backgroundShaderProgram.use();
-		backgroundShaderProgram.setBool("worldCoordinates", false);
-		backgroundShaderProgram.setMat4("view", view);
-		backgroundShaderProgram.setMat4("projection", projection);
-		backgroundShaderProgram.setMat4("transform", bgTrans);
-		backgroundShaderProgram.setMat4("model", bgModel);
 
-		glBindVertexArray(bgVAO);
+	/*	glDepthMask(false);
+		skyBoxShader.use();
+		skyBoxShader.setMat4("projection", projection);
+		skyBoxShader.setMat4("view", glm::lookAt(glm::vec3(0,0,0), glm::vec3(0) + camera.Front, camera.Up));
+		skyBoxShader.setInt("skybox", 0);
+		glBindVertexArray(skyboxVAO);
 		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glBindTexture(GL_TEXTURE_2D, transparentTex1);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glDisableVertexAttribArray(1);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDisableVertexAttribArray(0);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		glBindVertexArray(0);
+
+		glDepthMask(true);
+
 		*/
-#pragma endregion
 
 
 
 
+
+
+
+		/**/
 		// Draw point lights
 
 		glm::vec3 pointLightColor = glm::normalize(rayColor);
@@ -635,6 +837,7 @@ int main() {
 
 		/* ------------------------------- */
 
+		glm::vec3 boatVec = glm::vec3(cubeModel*glm::vec4(1));
 
 
 		surfaceShader.setMat4("view", view);
@@ -645,6 +848,9 @@ int main() {
 		surfaceShader.setInt("heightMap", 0);
 		surfaceShader.setFloat("time", timeValue);
 		surfaceShader.setVec3("clickPoint", destination);
+		surfaceShader.setVec3("modelPosition", cubePos);
+		surfaceShader.setVec3("modelFront", boatVec);
+		surfaceShader.setVec3("travelDir", glm::normalize(destination - cubePos));
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, heightMap);
 		glActiveTexture(GL_TEXTURE1);
@@ -711,8 +917,8 @@ int main() {
 		for (int i = 0; i <(userBlocks.size() >= 1 ? 1 : 0); i++) {
 
 
-			if (cubePos.y > .95)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, -0.001f, 0));
-			if (cubePos.y < .90)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, 0.001f, 0));
+			if (cubePos.y > 3.0)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, -0.001f, 0));
+			if (cubePos.y < 2.95)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, 0.001f, 0));
 
 			float modelZBoundInWorld = myFirstModel.zBound*.1 + userBlocks.at(i).z;
 			glm::mat4 modelMat = glm::mat4(1);
@@ -720,7 +926,6 @@ int main() {
 
 				glm::vec3 travelDirection = glm::normalize(destination - cubePos);
 
-				glm::vec3 boatVec = glm::vec3(cubeModel*glm::vec4(1));
 				glm::vec2 originVec(0, -1);
 				glm::vec2 v1 = glm::vec2(cubePos.x + boatVec.x, cubePos.z + boatVec.z);
 				glm::vec2 v2 = glm::vec2(destination.x, destination.z);
@@ -731,55 +936,20 @@ int main() {
 				float degTheta = glm::degrees(acosf(cosTheta));
 				float degPhi = glm::degrees(acosf(cosPhi));
 
-				// Rotate left
-				if (abs(degTheta - degPhi) > 2) {
-					if (degTheta < degPhi) {
-						cubeModel = glm::rotate(cubeModel, glm::radians(0.1f), glm::vec3(0, 1, 0));
-					}
-
-					// Rotate right
-					if (degTheta > degPhi) {
-						cubeModel = glm::rotate(cubeModel, glm::radians(-0.1f), glm::vec3(0, 1, 0));
-
-					}
-				}
-
-
-				/*
-
-				if (rayDirection == glm::vec3(0))
-				{
-					std::cout << "----------------------------------------" << std::endl;
-					std::cout << "Destination degrees from origin: " << glm::degrees(acosf(cosPhi)) << std::endl;
-					std::cout << "Boat + stern degrees from origin: " << glm::degrees(acosf(cosTheta)) << std::endl;
-					std::cout << "Path dir is: " << "( " << travelDirection.x << "," << travelDirection.y << "," << travelDirection.z << " )" << std::endl;
-					std::cout << "Dest dir is: " << "( " << destination.x << "," << destination.y << "," << destination.z << " )" << std::endl;
-				}
-					*/
-
+				glm::vec3 modelFront = glm::column(cubeModel, 2);
+				getRelativeQuadrant(glm::vec2(-travelDirection.x, travelDirection.z), glm::vec2(-modelFront.x,modelFront.z));
 				cubeTransform = glm::translate(cubeTransform, 0.025f*glm::vec3(travelDirection.x, 0, travelDirection.z));
-				//camera.Position.x += 0.0025f*travelDirection.x;
-				//camera.Position.z += 0.0025f*travelDirection.z;
 				cubeShaderProgram.setMat4("model", cubeModel);
 				cubeShaderProgram.setMat4("transform", cubeTransform);				
-				
 				myFirstModel.Draw(cubeShaderProgram);
 
 			}
 		
 			else {
-				//cubeModel = glm::rotate(cubeModel, glm::radians(0.025f), glm::vec3(0, 1, 0));
-
-				//cubeTransform = glm::translate(cubeTransform, glm::vec3(0.0025, 0, 0.0025));
-
 				cubeShaderProgram.setMat4("model", cubeModel);
 				cubeShaderProgram.setMat4("transform", cubeTransform);
 				myFirstModel.Draw(cubeShaderProgram);
-
 			}
-		//	std::cout << "X bound : " << myFirstModel.xBound*.1 + userBlocks.at(i).x << std::endl;
-		//	std::cout << "Z bound : " << myFirstModel.zBound*.1 + userBlocks.at(i).z << std::endl;
-
 		}
 
 		glDisableVertexAttribArray(2);
@@ -787,13 +957,24 @@ int main() {
 		glDisableVertexAttribArray(0);
 		glBindVertexArray(0);
 
-		// Unbind it
 #pragma endregion
 
-		
+
+
+
+
+
+
+
+
+
+
 
 
 		glClear(GL_DEPTH_BUFFER_BIT);
+
+
+
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -820,6 +1001,9 @@ int main() {
 
 
 		/////////////////////////////////////////////////
+
+
+
 
 		glfwSwapBuffers(mWind);
 

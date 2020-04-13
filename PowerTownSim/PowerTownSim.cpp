@@ -49,6 +49,62 @@ glm::mat4 cubeTransform = glm::mat4(1.0f);
 glm::mat4 cubeModel = glm::scale(glm::mat4(1.0f), glm::vec3(1.0));
 
 glm::vec3 destination = glm::vec3(0,0,0);
+
+
+
+
+enum TURN_DIRECTION {
+	L, R
+};
+
+int getRelativeQuadrant(glm::vec2 clickPoint, glm::vec2 origin) {
+
+	float degrees = glm::degrees(acosf(glm::dot(glm::normalize(clickPoint), glm::normalize(origin))));
+
+	origin = glm::normalize(origin);
+	clickPoint = glm::normalize(clickPoint);
+
+	float pointingX = origin.x;
+	float pointingZ = origin.y;
+
+	float directionX = clickPoint.x;
+	float directionZ = clickPoint.y;
+
+
+	return 4;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
@@ -215,6 +271,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		glm::vec3 pointOfIntersection = camera.Position + t * ray_wor;
 		std::cout << "( " << pointOfIntersection.x << ", " << pointOfIntersection.y << ", " << pointOfIntersection.z << " )" << std::endl;
 		 destination = pointOfIntersection;
+
+		 glm::vec3 cubePos = glm::vec3(cubeTransform*glm::vec4(1));
+		 glm::vec3 travelDirection = glm::normalize(destination - cubePos);
+		 glm::vec3 modelFront = glm::column(cubeModel, 2);
+
+		 getRelativeQuadrant(glm::vec2(-travelDirection.x, travelDirection.z), glm::vec2(-modelFront.x, modelFront.z));
+
 		
 
 	}
@@ -295,47 +358,6 @@ unsigned int loadCubemap(vector<std::string> faces)
 
 
 
-
-
-
-
-
-int getRelativeQuadrant(glm::vec2 clickPoint, glm::vec2 origin) {
-
-	float degrees = glm::degrees(acosf(glm::dot(glm::normalize(clickPoint), glm::normalize(origin))));
-
-
-
-
-	std::cout << "-----------------" << std::endl;
-
-
-	if (degrees > 0.1) {
-
-	if (clickPoint.x - origin.x < 0 && degrees > 0) {
-		std::cout << "LEFT" << std::endl;
-		cubeModel = glm::rotate(cubeModel, glm::radians(0.075f), glm::vec3(0, 1, 0));
-	}
-
-
-
-
-
-
-
-	else if (clickPoint.x - origin.x > 0 && degrees > 0) {
-
-		std::cout << "RIGHT" << std::endl;
-		cubeModel = glm::rotate(cubeModel, -glm::radians(0.075f), glm::vec3(0, 1, 0));
-
-	}
-	std::cout << "Degrees: " << degrees << std::endl;
-}
-
-
-	 return 4;
-
-}
 
 
 
@@ -937,8 +959,8 @@ int main() {
 				float degPhi = glm::degrees(acosf(cosPhi));
 
 				glm::vec3 modelFront = glm::column(cubeModel, 2);
-				getRelativeQuadrant(glm::vec2(-travelDirection.x, travelDirection.z), glm::vec2(-modelFront.x,modelFront.z));
-				cubeTransform = glm::translate(cubeTransform, 0.025f*glm::vec3(travelDirection.x, 0, travelDirection.z));
+				//getRelativeQuadrant(glm::vec2(-travelDirection.x, travelDirection.z), glm::vec2(-modelFront.x,modelFront.z));
+				//cubeTransform = glm::translate(cubeTransform, 0.025f*glm::vec3(travelDirection.x, 0, travelDirection.z));
 				cubeShaderProgram.setMat4("model", cubeModel);
 				cubeShaderProgram.setMat4("transform", cubeTransform);				
 				myFirstModel.Draw(cubeShaderProgram);

@@ -205,9 +205,7 @@ vec3 color = vec3(r,g,b);
 	vec3 pointResult = vec3(0,0,0);
 	    for(int i = 0; i < NR_POINT_LIGHTS; i++)
         pointResult += CalcPointLight(pointLights[i],fragPosition,i);    
-	
-	vec3 combinedResult = pointResult + (color * lightingResult);
-	
+
 	
 	
 	
@@ -223,14 +221,14 @@ vec3 color = vec3(r,g,b);
 	
 	vec3 origin = vec3(0,0,0);
 	
-/*	
+
 	int quadrant = getQuadrant(clickPoint, origin);
 	if (quadrant == 1) {
 		if (dot(normalize(fragPosition.xz),vec2(1,0)) >= dot(normalize(clickPoint.xz),vec2(1,0)) &&
 		
 		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
 
-		getQuadrant(fragPosition,origin) == 1) combinedResult = vec3(0.0,0.0,0.65);
+		getQuadrant(fragPosition,origin) == 1) color = vec3(0.0,0.0,0.65);
 	
 	}
 	
@@ -240,7 +238,7 @@ vec3 color = vec3(r,g,b);
 		
 		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
 
-		getQuadrant(fragPosition,origin) == 2) combinedResult = vec3(0.65,0.65,0.0);
+		getQuadrant(fragPosition,origin) == 2) color = vec3(0.65,0.65,0.0);
 	}
 
 	else if (quadrant == 3) {
@@ -248,7 +246,7 @@ vec3 color = vec3(r,g,b);
 		
 		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
 
-		getQuadrant(fragPosition,origin) == 3) combinedResult = vec3(0.0,0.65,0.0);
+		getQuadrant(fragPosition,origin) == 3) color = vec3(0.0,0.65,0.0);
 	
 	}
 	
@@ -257,11 +255,13 @@ vec3 color = vec3(r,g,b);
 		
 		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
 
-		getQuadrant(fragPosition,origin) == 4) combinedResult = vec3(0.65,0.0,0.65);
+		getQuadrant(fragPosition,origin) == 4) color = vec3(0.65,0.0,0.65);
 	
 	}
 	
-*/
+	
+	vec3 combinedResult = pointResult + (color * lightingResult);
+	
 	
 	if (abs(fragPosition.z - clickPoint.z) < 0.025) {combinedResult = vec3(1,1,1);}
 	if (abs(fragPosition.x - clickPoint.x) < 0.025){combinedResult = vec3(1,1,1);}

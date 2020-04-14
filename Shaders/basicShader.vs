@@ -22,9 +22,12 @@ void main()
 {
 
 	texCoord = aTexCoord;
-	fragHeight = (texture(heightTex, texCoord).r);
-	//if (fragHeight <0.02) fragHeight += 0.012*sin(0.1*time/aPos.x);
-	float height = (fragHeight/255.0)*35.50;
+	ivec2 textureSize2D = textureSize(heightTex,0);
+	ivec2 tc = ivec2(texCoord.x  , texCoord.y );
+
+	fragHeight = aPos.y;//(texelFetch(heightTex, tc, 0).r);// texture(heightTex,aTexCoord).r;
+	
+	float height = fragHeight;//clamp(fragHeight,0,0.1);
 	
 	gl_Position = projection * view * model * transform * vec4(vec3(aPos.x,height,aPos.z), 1.0);
 		

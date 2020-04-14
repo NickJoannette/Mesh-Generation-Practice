@@ -160,16 +160,18 @@ int getQuadrant(vec3 position, vec3 origin) {
 uniform vec3 modelPosition;
 uniform vec3 modelFront;
 uniform vec3 travelDir;
+
+
 void main()
 {
-float r = 0.888*fragHeight;
-float g = 0.888*fragHeight;
-float b = 0.888*fragHeight;
-if (fragHeight < 0.03) {
+float r = 0.5 + 0.888*fragHeight;
+float g = 0.5 +0.888*fragHeight;
+float b = 0.5 +0.888*fragHeight;
+if (fragHeight < -0.47) {
 r = 0.0;
 g = 0.0;
-b = 0.2 - 5*abs(fragHeight);
-if (b < 0.1) b = 0.021;
+b = 0.2 - 5*abs(0.5 +fragHeight);
+if (b < -0.4) b = 0.021;
 }
 
 /*if (abs(fragPosition.x - clickPoint.x) < 0.5 && abs(fragPosition.z - clickPoint.z) < 0.5) {
@@ -228,7 +230,7 @@ vec3 color = vec3(r,g,b);
 		
 		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
 
-		getQuadrant(fragPosition,origin) == 1) color = vec3(0.0,0.0,0.65);
+		getQuadrant(fragPosition,origin) == 1) color = vec3(0.0,0.65,0.65);
 	
 	}
 	
@@ -238,7 +240,7 @@ vec3 color = vec3(r,g,b);
 		
 		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
 
-		getQuadrant(fragPosition,origin) == 2) color = vec3(0.65,0.65,0.0);
+		getQuadrant(fragPosition,origin) == 2) color = vec3(0.0,0.65,0.65);
 	}
 
 	else if (quadrant == 3) {
@@ -246,7 +248,7 @@ vec3 color = vec3(r,g,b);
 		
 		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
 
-		getQuadrant(fragPosition,origin) == 3) color = vec3(0.0,0.65,0.0);
+		getQuadrant(fragPosition,origin) == 3) color = vec3(0.0,0.65,0.65);
 	
 	}
 	
@@ -255,7 +257,7 @@ vec3 color = vec3(r,g,b);
 		
 		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
 
-		getQuadrant(fragPosition,origin) == 4) color = vec3(0.65,0.0,0.65);
+		getQuadrant(fragPosition,origin) == 4) color = vec3(0.0,0.65,0.65);
 	
 	}
 	
@@ -292,6 +294,6 @@ vec3 color = vec3(r,g,b);
 	
 	
 	 float depth = LinearizeDepth(gl_FragCoord.z)/2500.0f;
-	FragColor = vec4(combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth),1);
+	FragColor = vec4((combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth))*1.25f,1);
 	
 };

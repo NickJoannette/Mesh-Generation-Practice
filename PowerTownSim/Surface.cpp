@@ -1,20 +1,69 @@
 #include "Surface.h"
+#include "stb_image.h"
+
+/*
+void visualizeImageWrite() {
+
+}
+
+*/
 
 Surface::Surface(unsigned int w, unsigned int l, bool f)
 {
+
+	std::string path = "../Textures/earthHeightMap.png";
+
+	int width, height, channels;
+	unsigned char *image = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+	unsigned int * heightMap = new unsigned int[129*129];
+
+
+	size_t img_size = width * height * channels;
+	unsigned char *new_image = new unsigned char[img_size];
+
+
+	int i = 0;
+	int k = 0;
+	for (unsigned char *p = image, *pn = new_image; p != image + img_size; p += channels, pn += channels) {
+		unsigned int height = static_cast<unsigned int>(*p);
+
+		*(heightMap + k++) = height;
+		//std::cout << "Height value: " << height << std::endl;
+		/**pn = *p;
+		*(pn+1) = (uint8_t)(225);
+		*(pn + 2) = *(p + 2);
+		*(pn + 3) = *(p + 3);
+		*/
+	}
+
+	stbi_image_free(image);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	// MEMBER INITIALIZATIONS
 	width = w; length = l; flat = f;
 	float normalizer = width >= length ? width : length;
 	// Algorithm for generating the plane's vertex data
+	int h = 0;
 	if (flat)
 	{
 		for (int j = 0; j <= width; j++)
 			for (int i = 0; i <= length; i++) {
-				vertices.push_back((float)i / normalizer);
-				vertices.push_back(0);
-				vertices.push_back((float)j / normalizer);
-				vertices.push_back((((float)i / normalizer) ));
-				vertices.push_back((((float)j / normalizer)));
+				vertices.push_back((float)i / normalizer - 0.5f);
+				vertices.push_back(((float) (*(heightMap + h++)))/255.0 - 0.5f);
+				vertices.push_back((float)j / normalizer - 0.5f);
+				vertices.push_back((((float)i)/normalizer ) - 0.5f);
+				vertices.push_back((((float)j)/normalizer) - 0.5f);
+				//std::cout << " ------------------------------------ " << std::endl;
+				//std::cout << "Vertex coordinate generated: " << " ( " << (((float)i)) << " , " << (((float)j)) << " ) " << std::endl;
+				//std::cout << "Texel coordinate generated: " << " ( " << (((float)i) ) << " , " << (((float)j) ) << " ) " << std::endl;
 			}
 	}
 	else

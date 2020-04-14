@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <glm/gtc/matrix_access.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "OpenGLWindow.h"
 #include "Camera.h"
 #include "Rendering.h"
@@ -10,7 +11,8 @@
 #include "Mesh.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stbi_image_write.h"
 
 const float SCR_WIDTH = 1440.0, SCR_HEIGHT = 900.0;
 float lastX = SCR_WIDTH / 2.0f;
@@ -33,6 +35,7 @@ GLFWwindow * mWind = mainWindow->glWindow();
 Camera camera(glm::vec3(0,1,0));
 
 Model myFirstModel = Model("../Models/myTests/camoboat.obj");
+Model itemOnBoat = Model("../Models/myTests/camoboat.obj");
 glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f);
 
 std::vector<glm::vec3> userBlocks;
@@ -57,11 +60,12 @@ enum TURN_DIRECTION {
 	L, R
 };
 
-int getRelativeQuadrant(glm::vec2 clickPoint, glm::vec2 origin) {
 
-	float degrees = glm::degrees(acosf(glm::dot(glm::normalize(clickPoint), glm::normalize(origin))));
 
-	origin = glm::normalize(origin);
+int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
+	if (glm::length(clickPoint) < 0.1) return -1;
+
+	glm::vec2 origin(glm::normalize(glm::vec2(-model[2].x,model[2].z)));
 	clickPoint = glm::normalize(clickPoint);
 
 	float pointingX = origin.x;
@@ -70,36 +74,21 @@ int getRelativeQuadrant(glm::vec2 clickPoint, glm::vec2 origin) {
 	float directionX = clickPoint.x;
 	float directionZ = clickPoint.y;
 
+	float xAdjustment = directionX - pointingX;
+	float zAdjustment = directionZ - pointingZ;
+
+	pointingX += xAdjustment;
+	pointingZ += zAdjustment;
+
+	model[2].x += -(pointingX - origin.x) / 1000.0;
+	model[0].z += (pointingX - origin.x) / 1000.0;
+	model[2].z += (pointingZ - origin.y) / 1000.0;
+	model[0].x += (pointingZ - origin.y) / 1000.0;
+	model[2] = glm::normalize(cubeModel[2]);
+	model[0] = glm::normalize(cubeModel[0]);
 
 	return 4;
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -269,14 +258,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		glm::vec3 plane(0, 1, 0);
 		float t = -(glm::dot(camera.Position, plane) / (glm::dot(ray_wor, plane)));
 		glm::vec3 pointOfIntersection = camera.Position + t * ray_wor;
-		std::cout << "( " << pointOfIntersection.x << ", " << pointOfIntersection.y << ", " << pointOfIntersection.z << " )" << std::endl;
+		std::cout << "INTERSECTION OF CLICK ( " << pointOfIntersection.x << ", " << pointOfIntersection.y << ", " << pointOfIntersection.z << " )" << std::endl;
+		std::cout << "CAM FRONT ( " << camera.Front.x << ", " << camera.Front.y << ", " << camera.Front.z << " )" << std::endl;
 		 destination = pointOfIntersection;
 
 		 glm::vec3 cubePos = glm::vec3(cubeTransform*glm::vec4(1));
 		 glm::vec3 travelDirection = glm::normalize(destination - cubePos);
 		 glm::vec3 modelFront = glm::column(cubeModel, 2);
 
-		 getRelativeQuadrant(glm::vec2(-travelDirection.x, travelDirection.z), glm::vec2(-modelFront.x, modelFront.z));
 
 		
 
@@ -321,6 +310,8 @@ void load2DWrappedMipMapTexture(const char * path, unsigned int * addr, bool fli
 	}
 	stbi_image_free(data);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	//glTexSubImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
 unsigned int loadCubemap(vector<std::string> faces)
@@ -382,20 +373,7 @@ unsigned int loadCubemap(vector<std::string> faces)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 int main() {
-
 #pragma region register the callbacks for glfw
 
 	glfwSetScrollCallback(mWind, scroll_callback);
@@ -524,13 +502,13 @@ int main() {
 
 
 	unsigned int backgroundTexture;
-	load2DWrappedMipMapTexture("../Textures/cursor1.png", &backgroundTexture, true);
+	load2DWrappedMipMapTexture("../Textures/cursor1.png", &backgroundTexture, false);
 
 	unsigned int heightMap;
-	load2DWrappedMipMapTexture("../Textures/earthHeightMap.png", &heightMap, true);
+	load2DWrappedMipMapTexture("../Textures/earthDiffuseMap.png", &heightMap, false);
 
 	unsigned int earthDiffuseMap;
-	load2DWrappedMipMapTexture("../Textures/earthDiffuseMap.png", &earthDiffuseMap, true);
+	load2DWrappedMipMapTexture("../Textures/earthDiffuseMap.png", &earthDiffuseMap, false);
 
 
 	vector<std::string> faces
@@ -643,7 +621,7 @@ int main() {
 	bgModel = glm::rotate(bgModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
 
 
-	Surface mouseSurface(4, 4, true);
+	//Surface mouseSurface(4, 4, true);
 	glm::mat4 mouseSurfaceModel = glm::mat4(1);
 	glm::mat4 mouseSurfaceTransform = glm::mat4(1);
 
@@ -697,12 +675,11 @@ int main() {
 
 
 
-	Surface surface(256, 256, true);
+	Surface surface(128,128, true);
 	glm::mat4 surfaceModel = glm::mat4(1);
 	glm::mat4 surfaceTransform = glm::mat4(1);
-	surfaceModel = glm::translate(surfaceModel, glm::vec3(-7500, 0, -4500));
 
-	surfaceModel = glm::scale(surfaceModel, glm::vec3(15000, 9000, 9000));
+	surfaceModel = glm::scale(surfaceModel, glm::vec3(1250, 125, 1250));
 
 
 
@@ -959,8 +936,9 @@ int main() {
 				float degPhi = glm::degrees(acosf(cosPhi));
 
 				glm::vec3 modelFront = glm::column(cubeModel, 2);
-				//getRelativeQuadrant(glm::vec2(-travelDirection.x, travelDirection.z), glm::vec2(-modelFront.x,modelFront.z));
-				//cubeTransform = glm::translate(cubeTransform, 0.025f*glm::vec3(travelDirection.x, 0, travelDirection.z));
+
+				rotateModelTowardsVector(glm::vec2(-(destination - cubePos).x, (destination - cubePos).z), cubeModel);
+				cubeTransform = glm::translate(cubeTransform, 0.025f*glm::vec3(travelDirection.x, 0, travelDirection.z));
 				cubeShaderProgram.setMat4("model", cubeModel);
 				cubeShaderProgram.setMat4("transform", cubeTransform);				
 				myFirstModel.Draw(cubeShaderProgram);
@@ -980,11 +958,6 @@ int main() {
 		glBindVertexArray(0);
 
 #pragma endregion
-
-
-
-
-
 
 
 
@@ -1035,15 +1008,6 @@ int main() {
 	glfwTerminate();
 	
 	return -1;
-
-
-
-
-
-
-
-
-
 
 
 		

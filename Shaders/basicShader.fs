@@ -178,6 +178,7 @@ if (b < -0.4) b = 0.021;
 r = 1.0;
  g = 1.0;
 }*/
+	if (fragHeight > -0.50) b = 0;
 
 
 vec3 color = vec3(r,g,b);
@@ -225,7 +226,8 @@ vec3 color = vec3(r,g,b);
 	
 
 	int quadrant = getQuadrant(clickPoint, origin);
-	if (quadrant == 1) {
+	
+	/*if (quadrant == 1) {
 		if (dot(normalize(fragPosition.xz),vec2(1,0)) >= dot(normalize(clickPoint.xz),vec2(1,0)) &&
 		
 		(abs(fragPosition.x) <= abs(clickPoint.x) && abs(fragPosition.z) <= abs(clickPoint.z)) &&
@@ -261,12 +263,12 @@ vec3 color = vec3(r,g,b);
 	
 	}
 	
-	
+	*/
 	vec3 combinedResult = pointResult + (color * lightingResult);
 	
 	
-	if (abs(fragPosition.z - clickPoint.z) < 0.025) {combinedResult = vec3(1,1,1);}
-	if (abs(fragPosition.x - clickPoint.x) < 0.025){combinedResult = vec3(1,1,1);}
+	if (abs(fragPosition.z - clickPoint.z) < 0.1) {combinedResult = vec3(1,0,0);}
+	if (abs(fragPosition.x - clickPoint.x) < 0.1){combinedResult = vec3(1,0,0);}
 	
 	// Draw the x/y origin axes
 	
@@ -292,8 +294,7 @@ vec3 color = vec3(r,g,b);
 	
 	
 	
-	
 	 float depth = LinearizeDepth(gl_FragCoord.z)/2500.0f;
-	FragColor = vec4((combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth))*1.25f,1);
+	FragColor = vec4((combinedResult * vec3(1.0f ,1.0f,1.0f))*1.95,1);
 	
 };

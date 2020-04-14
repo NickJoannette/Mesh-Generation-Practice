@@ -49,6 +49,8 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 	// MEMBER INITIALIZATIONS
 	width = w; length = l; flat = f;
+
+
 	HeightMap = new heightMapping[(w + 1)*(l + 1)];
 	PossibleXValues = new float[length];
 	PossibleZValues = new float[width];
@@ -58,7 +60,8 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	int h = 0;
 	if (flat)
 	{
-		for (int j = 0; j <= width; j++)
+		for (int j = 0; j <= width; j++) {
+
 			for (int i = 0; i <= length; i++) {
 				float x = (float)i / normalizer - 0.5f;
 				float height = ((float)(*(heightMap + h++))) / 255.0 - 0.5f;
@@ -72,13 +75,17 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 				vertices.push_back(z);
 
 				// Texture coordinates
-				vertices.push_back((((float)i)/normalizer ) - 0.5f);
-				vertices.push_back((((float)j)/normalizer) - 0.5f);
+				vertices.push_back((((float)i) / normalizer) - 0.5f);
+				vertices.push_back((((float)j) / normalizer) - 0.5f);
 
 				heightMapping hm{ x, z, height };
 				*(HeightMap + h - 1) = hm;
-			//s	std::cout << "Added Height Map w/ Height: " << HeightMap[h - 1].height << std::endl;
+
+				SuperMap.insert(std::make_pair(x, zHeightMapping{ z,height }));
+
+				//s	std::cout << "Added Height Map w/ Height: " << HeightMap[h - 1].height << std::endl;
 			}
+		}
 	}
 	else
 	{
@@ -150,19 +157,18 @@ float Surface::mapToGridZ(float zCoord) {
 	for (int i = 1; i < width; i++) if (PossibleZValues[i - 1] <= zCoord && zCoord <= PossibleZValues[i]) return PossibleZValues[i];
 }
 
-float Surface::findHeight(float xCoord, float zCoord, float xScale, float zScale) {
+float * Surface::findHeight(float xCoord, float zCoord, float xScale, float zScale) {
 
 	xCoord = mapToGridX(xCoord/xScale);
 	zCoord = mapToGridZ(zCoord/zScale);
 	
-	std::cout << "xCoord: " << xCoord << std::endl;
-	std::cout << "zCoord: " << zCoord << std::endl;
-	for (int i = 0; i < width * length; i++) {
-		if (HeightMap[i].x == xCoord && HeightMap[i].z == zCoord) return HeightMap[i].height;
-	}
-	return 0.0f;
+	auto r = SuperMap.equal_range(xCoord);
 
+	for (auto begin = r.first; begin != r.second; begin++) if (begin->second.z == zCoord) return &begin->second.height;
+
+	return nullptr;
 }
+
 
 
 void Surface::Draw()

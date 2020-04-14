@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include <chrono>
 #include <vector>
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -80,10 +80,10 @@ int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
 	pointingX += xAdjustment;
 	pointingZ += zAdjustment;
 
-	model[2].x += -(pointingX - origin.x) / 1000.0;
-	model[0].z += (pointingX - origin.x) / 1000.0;
-	model[2].z += (pointingZ - origin.y) / 1000.0;
-	model[0].x += (pointingZ - origin.y) / 1000.0;
+	model[2].x += -(pointingX - origin.x) / 100.0;
+	model[0].z += (pointingX - origin.x) / 100.0;
+	model[2].z += (pointingZ - origin.y) / 100.0;
+	model[0].x += (pointingZ - origin.y) / 100.0;
 	model[2] = glm::normalize(cubeModel[2]);
 	model[0] = glm::normalize(cubeModel[0]);
 
@@ -235,8 +235,15 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 // ----------------------------------------------------------------------
 Surface surface(128, 128, true);
 
+
+glm::mat4 surfaceModel = glm::mat4(1);
+glm::mat4 surfaceTransform = glm::mat4(1);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
+
+	float terrainYScale = glm::length(surfaceModel[1]);
+
+
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 		glm::vec3 camPos = camera.Position;
 		glm::mat4 transf = glm::inverse(projection);
@@ -267,7 +274,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		 glm::vec3 travelDirection = glm::normalize(destination - cubePos);
 		 glm::vec3 modelFront = glm::column(cubeModel, 2);
 
-		 std::cout << "Found height: " << surface.findHeight(pointOfIntersection.x, pointOfIntersection.z, 1250, 1250) << std::endl;
+		 std::cout << "Found height: " << surface.findHeight(pointOfIntersection.x, pointOfIntersection.z, 7500, 7500) << std::endl;
 
 		
 
@@ -347,9 +354,6 @@ unsigned int loadCubemap(vector<std::string> faces)
 
 	return textureID;
 }
-
-
-
 
 
 
@@ -677,10 +681,7 @@ int main() {
 
 
 
-	glm::mat4 surfaceModel = glm::mat4(1);
-	glm::mat4 surfaceTransform = glm::mat4(1);
-
-	surfaceModel = glm::scale(surfaceModel, glm::vec3(1250, 125, 1250));
+	surfaceModel = glm::scale(surfaceModel, glm::vec3(7500, 750, 7500));
 
 	//cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), glm::vec3(0, 1, 0));
 
@@ -801,6 +802,7 @@ int main() {
 		surfaceShader.setInt("heightTex", 0);
 		surfaceShader.setInt("material.diffuse", 1);
 		surfaceShader.setInt("material.specular", 2);
+		surfaceShader.setFloat("material.shininess", 64);
 		surfaceShader.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
 
 		surfaceShader.setVec3("pointLights[0].ambient", 0.2f* pointLightColor);
@@ -909,8 +911,7 @@ int main() {
 		glBindTexture(GL_TEXTURE1, 0);
 		for (int i = 0; i <(userBlocks.size() >= 1 ? 1 : 0); i++) {
 				
-
-			if (cubePos.y > surface.lowestLow * glm::length(surfaceModel[1]) + 2.5f) cubeTransform = glm::translate(cubeTransform, glm::vec3(0, -0.1f, 0));
+			float terrainYScale = glm::length(surfaceModel[1]);
 			//if (cubePos.y < surface.lowestLow * glm::length(surfaceModel[1]) - 0.5)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, 0.001f, 0));
 
 			float modelZBoundInWorld = myFirstModel.zBound*.1 + userBlocks.at(i).z;
@@ -930,9 +931,12 @@ int main() {
 				float degPhi = glm::degrees(acosf(cosPhi));
 
 				glm::vec3 modelFront = glm::column(cubeModel, 2);
+				
+					cubeTransform[3].y = *surface.findHeight(cubePos.x, cubePos.z, 7500, 7500)*terrainYScale + 25.0*sinf(3*timeValue) + 2.5f;
+					rotateModelTowardsVector(glm::vec2(-(destination - cubePos).x, (destination - cubePos).z), cubeModel);
 
-				rotateModelTowardsVector(glm::vec2(-(destination - cubePos).x, (destination - cubePos).z), cubeModel);
-				cubeTransform = glm::translate(cubeTransform, 0.025f*glm::vec3(travelDirection.x, 0, travelDirection.z));
+					cubeTransform = glm::translate(cubeTransform, 2.0f*glm::vec3(travelDirection.x, 0, travelDirection.z));
+
 				cubeShaderProgram.setMat4("model", cubeModel);
 				cubeShaderProgram.setMat4("transform", cubeTransform);				
 				myFirstModel.Draw(cubeShaderProgram);

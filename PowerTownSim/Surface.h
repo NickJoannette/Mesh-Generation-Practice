@@ -2,6 +2,7 @@
 #define SURFACE_H
 #include <glm/glm.hpp>
 #include <vector>
+#include <map>
 #include "shader.h"
 #include <glew/glew.h>
 
@@ -15,8 +16,7 @@ public:
 
 	Surface(unsigned int w, unsigned int l, bool f);
 	void Draw();
-	float findHeight(float xCoord, float zCoord, float xScale, float zScale);
-
+	float * findHeight(float xCoord, float zCoord, float xScale, float zScale);
 	~Surface();
 
 	float lowestLow = 9999999, highestHigh = -99999999;
@@ -27,12 +27,14 @@ private:
 	float mapToGridX(float xCoord);
 	float mapToGridZ(float zCoord);
 
+
 	// Variables for rendering
 	unsigned int ebo;
 	unsigned int vbo;
 	unsigned int vao;
 
-
+	struct zHeightMapping { float z, height; };
+	std::multimap<float, zHeightMapping> SuperMap;
 	struct heightMapping { float x, z, height; };
 
 	heightMapping * HeightMap;

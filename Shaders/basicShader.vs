@@ -26,9 +26,9 @@ void main()
 	ivec2 tc = ivec2(texCoord.x  , texCoord.y );
 
 	fragHeight = aPos.y;//(texelFetch(heightTex, tc, 0).r);// texture(heightTex,aTexCoord).r;
-	
 	float height = fragHeight;//clamp(fragHeight,0,0.1);
-	
+		if (height == -0.5) height += 0.033333 * sin(3*time);
+
 	gl_Position = projection * view * model * transform * vec4(vec3(aPos.x,height,aPos.z), 1.0);
 		
 

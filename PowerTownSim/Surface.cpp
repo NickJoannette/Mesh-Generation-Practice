@@ -13,12 +13,12 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 	std::string path = "../Textures/earthHeightMap.png";
 
-	int width, height, channels;
-	unsigned char *image = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+	int iWidth, iHeight, channels;
+	unsigned char *image = stbi_load(path.c_str(), &iWidth, &iHeight, &channels, STBI_rgb_alpha);
 	unsigned int * heightMap = new unsigned int[129*129];
 
 
-	size_t img_size = width * height * channels;
+	size_t img_size = iWidth * iHeight * channels;
 	unsigned char *new_image = new unsigned char[img_size];
 
 
@@ -46,9 +46,13 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	
 	
 	
-	
+
 	// MEMBER INITIALIZATIONS
 	width = w; length = l; flat = f;
+	HeightMap = new heightMapping[(w + 1)*(l + 1)];
+	PossibleXValues = new float[length];
+	PossibleZValues = new float[width];
+
 	float normalizer = width >= length ? width : length;
 	// Algorithm for generating the plane's vertex data
 	int h = 0;
@@ -56,14 +60,24 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	{
 		for (int j = 0; j <= width; j++)
 			for (int i = 0; i <= length; i++) {
-				vertices.push_back((float)i / normalizer - 0.5f);
-				vertices.push_back(((float) (*(heightMap + h++)))/255.0 - 0.5f);
-				vertices.push_back((float)j / normalizer - 0.5f);
+				float x = (float)i / normalizer - 0.5f;
+				float height = ((float)(*(heightMap + h++))) / 255.0 - 0.5f;
+				float z = (float)j / normalizer - 0.5f;
+
+				if (height < lowestLow) lowestLow = height;
+				if (height > highestHigh) highestHigh = height;
+
+				vertices.push_back(x);
+				vertices.push_back(height);
+				vertices.push_back(z);
+
+				// Texture coordinates
 				vertices.push_back((((float)i)/normalizer ) - 0.5f);
 				vertices.push_back((((float)j)/normalizer) - 0.5f);
-				//std::cout << " ------------------------------------ " << std::endl;
-				//std::cout << "Vertex coordinate generated: " << " ( " << (((float)i)) << " , " << (((float)j)) << " ) " << std::endl;
-				//std::cout << "Texel coordinate generated: " << " ( " << (((float)i) ) << " , " << (((float)j) ) << " ) " << std::endl;
+
+				heightMapping hm{ x, z, height };
+				*(HeightMap + h - 1) = hm;
+			//s	std::cout << "Added Height Map w/ Height: " << HeightMap[h - 1].height << std::endl;
 			}
 	}
 	else
@@ -116,7 +130,40 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
 
+	setPossibleValues();
+
 }
+
+void Surface::setPossibleValues() {
+	float normalizer = width >= length ? width : length;
+
+	for (int i = 0; i < length; i++) PossibleXValues[i] = (float)i / normalizer - 0.5f;
+	for (int i = 0; i < width; i++) PossibleZValues[i] = (float)i / normalizer - 0.5f;
+
+}
+
+float Surface::mapToGridX(float xCoord) {
+	for (int i = 1; i < length; i++) if (PossibleXValues[i - 1] <= xCoord && xCoord <= PossibleXValues[i]) return PossibleXValues[i];
+}
+
+float Surface::mapToGridZ(float zCoord) {
+	for (int i = 1; i < width; i++) if (PossibleZValues[i - 1] <= zCoord && zCoord <= PossibleZValues[i]) return PossibleZValues[i];
+}
+
+float Surface::findHeight(float xCoord, float zCoord, float xScale, float zScale) {
+
+	xCoord = mapToGridX(xCoord/xScale);
+	zCoord = mapToGridZ(zCoord/zScale);
+	
+	std::cout << "xCoord: " << xCoord << std::endl;
+	std::cout << "zCoord: " << zCoord << std::endl;
+	for (int i = 0; i < width * length; i++) {
+		if (HeightMap[i].x == xCoord && HeightMap[i].z == zCoord) return HeightMap[i].height;
+	}
+	return 0.0f;
+
+}
+
 
 void Surface::Draw()
 {

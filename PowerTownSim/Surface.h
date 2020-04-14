@@ -15,16 +15,33 @@ public:
 
 	Surface(unsigned int w, unsigned int l, bool f);
 	void Draw();
+	float findHeight(float xCoord, float zCoord, float xScale, float zScale);
+
 	~Surface();
 
+	float lowestLow = 9999999, highestHigh = -99999999;
+
 private:
+
+	void setPossibleValues();
+	float mapToGridX(float xCoord);
+	float mapToGridZ(float zCoord);
 
 	// Variables for rendering
 	unsigned int ebo;
 	unsigned int vbo;
 	unsigned int vao;
 
+
+	struct heightMapping { float x, z, height; };
+
+	heightMapping * HeightMap;
+
+	float * PossibleXValues;
+	float * PossibleZValues;
+
 	std::vector <float> vertices;
+	
 	std::vector <GLuint> indices;
 
 	// Geometric variables

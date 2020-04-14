@@ -233,6 +233,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 // Mouse button click callback
 // ----------------------------------------------------------------------
+Surface surface(128, 128, true);
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
@@ -266,6 +267,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		 glm::vec3 travelDirection = glm::normalize(destination - cubePos);
 		 glm::vec3 modelFront = glm::column(cubeModel, 2);
 
+		 std::cout << "Found height: " << surface.findHeight(pointOfIntersection.x, pointOfIntersection.z, 1250, 1250) << std::endl;
 
 		
 
@@ -675,18 +677,10 @@ int main() {
 
 
 
-	Surface surface(128,128, true);
 	glm::mat4 surfaceModel = glm::mat4(1);
 	glm::mat4 surfaceTransform = glm::mat4(1);
 
 	surfaceModel = glm::scale(surfaceModel, glm::vec3(1250, 125, 1250));
-
-
-
-
-
-
-
 
 	//cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), glm::vec3(0, 1, 0));
 
@@ -914,10 +908,10 @@ int main() {
 
 		glBindTexture(GL_TEXTURE1, 0);
 		for (int i = 0; i <(userBlocks.size() >= 1 ? 1 : 0); i++) {
+				
 
-
-			if (cubePos.y > 3.0)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, -0.001f, 0));
-			if (cubePos.y < 2.95)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, 0.001f, 0));
+			if (cubePos.y > surface.lowestLow * glm::length(surfaceModel[1]) + 2.5f) cubeTransform = glm::translate(cubeTransform, glm::vec3(0, -0.1f, 0));
+			//if (cubePos.y < surface.lowestLow * glm::length(surfaceModel[1]) - 0.5)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, 0.001f, 0));
 
 			float modelZBoundInWorld = myFirstModel.zBound*.1 + userBlocks.at(i).z;
 			glm::mat4 modelMat = glm::mat4(1);

@@ -202,6 +202,54 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 		}
 
+		/*
+		// Now set each vertex normal to the average of the surrounding triangles
+		for (int i = 0; i < vertices.size()/width; i++) {
+			int ind = i * 8;
+			float nX, nY, nZ;
+			// If it's the first row of vertices
+			if (i < length) {
+
+				if (i == 0) {
+
+					nX = (vertices[ind + 8] + vertices[ind + 8 * width]) / 2.0;
+					nY = (vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 2.0;
+					nZ = (vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 2.0;
+
+				}
+				else {
+
+					nX = (vertices[ind - 8] + vertices[ind + 8] + vertices[ind + 8 * width]) / 3.0;
+					nY = (vertices[ind - 7] + vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 3.0;
+					nZ = (vertices[ind - 6] + vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 3.0;
+
+				}
+
+
+			}
+			else if (i % width == 0) {
+				nX = (vertices[ind - 8*width] + vertices[ind + 8] + vertices[ind + 8 * width]) / 3.0;
+				nY = (vertices[ind - 8*width + 1] + vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 3.0;
+				nZ = (vertices[ind - 8*width + 2] + vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 3.0;
+
+			}
+			else {
+				nX = (vertices[ind - 8 * width] + vertices[ind - 8] +  vertices[ind + 8] + vertices[ind + 8 * width]) / 4.0;
+				nY = (vertices[ind - 8 * width + 1] + vertices[ind - 7] + vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 4.0;
+				nZ = (vertices[ind - 8 * width + 2] + vertices[ind - 6] + vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 4.0;
+			}
+
+			vertices[ind + 5] = nX;
+			vertices[ind + 6] = nY;
+			vertices[ind + 7] = nZ;
+
+			std::cout << "Averaged normal : (" << nX << "," << nY << "," << nZ << ")" << std::endl;
+
+
+		}
+
+		*/
+
 	}
 		/*
 

@@ -9,11 +9,14 @@
 #include "Surface.h"
 #include "Model.h"
 #include "Mesh.h"
+#include <irrKlang/irrKlang.h>
+using namespace irrklang;
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stbi_image_write.h"
 
+ISoundEngine *SoundEngine = createIrrKlangDevice();
 const float SCR_WIDTH = 1440.0, SCR_HEIGHT = 900.0;
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -32,9 +35,9 @@ float lastFrame = 0.0f;
 
 OpenGLWindow * mainWindow = new OpenGLWindow(SCR_WIDTH, SCR_HEIGHT);
 GLFWwindow * mWind = mainWindow->glWindow();
-Camera camera(glm::vec3(0,1,0));
+Camera camera(glm::vec3(0, 1, 0));
 
-Model myFirstModel = Model("../Models/myTests/camoboat.obj");
+Model myFirstModel = Model("../Models/myTests/whaleDiver.obj");
 Model itemOnBoat = Model("../Models/myTests/camoboat.obj");
 glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f);
 
@@ -49,9 +52,9 @@ glm::vec3 rayColor3 = glm::vec3(1);
 glm::vec3 rayColor4 = glm::vec3(1);
 
 glm::mat4 cubeTransform = glm::mat4(1.0f);
-glm::mat4 cubeModel = glm::scale(glm::mat4(1.0f), glm::vec3(1.0));
+glm::mat4 cubeModel = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 
-glm::vec3 destination = glm::vec3(0,0,0);
+glm::vec3 destination = glm::vec3(0, 0, 0);
 
 
 
@@ -65,7 +68,7 @@ enum TURN_DIRECTION {
 int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
 	if (glm::length(clickPoint) < 0.1) return -1;
 
-	glm::vec2 origin(glm::normalize(glm::vec2(-model[2].x,model[2].z)));
+	glm::vec2 origin(glm::normalize(glm::vec2(-model[2].x, model[2].z)));
 	clickPoint = glm::normalize(clickPoint);
 
 	float pointingX = origin.x;
@@ -92,7 +95,7 @@ int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
 
 
 
-
+bool displayNormals = false;
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -113,11 +116,12 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
 		camera.MovementSpeed -= .1f;
 
+
 	if (glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
 		camera.MovementSpeed += .1f;
 
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-		if (!userBlocks.empty()) camera.Position = (glm::vec3(0,1,1) + glm::vec3(cubeTransform*glm::vec4(1)));
+		if (!userBlocks.empty()) camera.Position = (glm::vec3(0, 1, 1) + glm::vec3(cubeTransform*glm::vec4(1)));
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -148,7 +152,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
 		lightSourcePosition = camera.Position + camera.Front;
-
+	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
+		displayNormals = !displayNormals;
 	if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
 		glm::vec3 boatVec = glm::vec3(cubeModel*glm::vec4(1));
 
@@ -163,7 +168,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -233,7 +238,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 // Mouse button click callback
 // ----------------------------------------------------------------------
-Surface surface( 477, 477, true);
+Surface surface(477, 477, true);
 
 
 glm::mat4 surfaceModel = glm::mat4(1);
@@ -268,15 +273,15 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		glm::vec3 pointOfIntersection = camera.Position + t * ray_wor;
 		std::cout << "INTERSECTION OF CLICK ( " << pointOfIntersection.x << ", " << pointOfIntersection.y << ", " << pointOfIntersection.z << " )" << std::endl;
 		std::cout << "CAM FRONT ( " << camera.Front.x << ", " << camera.Front.y << ", " << camera.Front.z << " )" << std::endl;
-		 destination = pointOfIntersection;
+		destination = pointOfIntersection;
 
-		 glm::vec3 cubePos = glm::vec3(cubeTransform*glm::vec4(1));
-		 glm::vec3 travelDirection = glm::normalize(destination - cubePos);
-		 glm::vec3 modelFront = glm::column(cubeModel, 2);
+		glm::vec3 cubePos = glm::vec3(cubeTransform*glm::vec4(1));
+		glm::vec3 travelDirection = glm::normalize(destination - cubePos);
+		glm::vec3 modelFront = glm::column(cubeModel, 2);
 
-		 std::cout << "Found height: " << *surface.findHeight(pointOfIntersection.x, pointOfIntersection.z, 250, 250) << std::endl;
+		std::cout << "Found height: " << *surface.findHeight(pointOfIntersection.x, pointOfIntersection.z, 250, 250) << std::endl;
 
-		
+
 
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
@@ -504,6 +509,7 @@ int main() {
 	Shader cubeShaderProgram("../Shaders/texturedCubeShader.vs", "../Shaders/texturedCubeShader.fs", "G");
 	Shader backgroundShaderProgram("../Shaders/backgroundTextureShader.vs", "../Shaders/backgroundTextureShader.fs", "G");
 	Shader surfaceShader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
+	Shader normalDisplayShader("../Shaders/normalDisplayShader.vs", "../Shaders/normalDisplayShader.gs", "../Shaders/normalDisplayShader.fs", "T");
 
 
 
@@ -592,7 +598,7 @@ int main() {
 
 	glGenVertexArrays(1, &lightSourceVAO);
 	glBindVertexArray(lightSourceVAO);
-	glBindBuffer(GL_ARRAY_BUFFER,cubeVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -605,7 +611,7 @@ int main() {
 #pragma region Utility cube vertex array objects
 	unsigned int utilityCubeVAO;
 	glm::mat4 utilityCubeModel = glm::mat4(1);
-	utilityCubeModel = glm::translate(utilityCubeModel, glm::vec3(0,0,2));
+	utilityCubeModel = glm::translate(utilityCubeModel, glm::vec3(0, 0, 2));
 
 	utilityCubeModel = glm::scale(utilityCubeModel, glm::vec3(.75f));
 	glm::mat4 utilityCubeTransform = glm::mat4(1);
@@ -654,20 +660,6 @@ int main() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	backgroundShaderProgram.setBool("worldCoordinates", false);
 
 
@@ -681,7 +673,7 @@ int main() {
 
 
 
-	surfaceModel = glm::scale(surfaceModel, glm::vec3(250, 75, 250));
+	surfaceModel = glm::scale(surfaceModel, glm::vec3(250, 135, 250));
 
 	//cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), glm::vec3(0, 1, 0));
 
@@ -697,11 +689,11 @@ int main() {
 		//std::cout << "FPS: " << (1.0f / deltaTime) << std::endl;
 		glfwPollEvents();
 		processInput(mWind);
-		mainWindow->clearColor(0, 0.05, 0.142, 0.4);
+		mainWindow->clearColor(0.0021, 0.016, 0.046, 1.0);
 
 
 		glm::mat4 view = camera.GetViewMatrix();
-		projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f); 
+		projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f);
 
 
 		glm::vec3 lightSourceColor = glm::normalize(rayColor);
@@ -711,22 +703,22 @@ int main() {
 #pragma endregion
 
 
-	glDepthMask(false);
+		glDepthMask(false);
 		skyBoxShader.use();
 		skyBoxShader.setMat4("projection", projection);
-		skyBoxShader.setMat4("view", glm::lookAt(glm::vec3(0,0,0), glm::vec3(0) + camera.Front, camera.Up));
+		skyBoxShader.setMat4("view", glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0) + camera.Front, camera.Up));
 		skyBoxShader.setInt("skybox", 0);
 		glBindVertexArray(skyboxVAO);
 		glEnableVertexAttribArray(0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		//	glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDisableVertexAttribArray(0);
 		glBindVertexArray(0);
 
 		glDepthMask(true);
 
-		
+
 
 
 
@@ -834,9 +826,9 @@ int main() {
 
 		glm::vec3 boatVec = glm::vec3(cubeModel*glm::vec4(1));
 
-
 		surfaceShader.setMat4("view", view);
 		surfaceShader.setMat4("projection", projection);
+
 		surfaceShader.setMat4("transform", surfaceTransform);
 		surfaceShader.setMat4("model", surfaceModel);
 		surfaceShader.setVec3("fragColor", glm::vec3(0.0, 0.0, 0.35));
@@ -854,8 +846,13 @@ int main() {
 		glBindTexture(GL_TEXTURE_2D, earthDiffuseMap);
 		surfaceShader.setMat4("transform", surfaceTransform);
 		surface.Draw();
-
-
+		if (displayNormals) {
+			normalDisplayShader.use();
+			normalDisplayShader.setMat4("view", view);
+			normalDisplayShader.setMat4("projection", projection);
+			normalDisplayShader.setMat4("model", surfaceModel);
+			surface.Draw();
+		}
 #pragma endregion
 
 #pragma region cube drawing 
@@ -871,7 +868,7 @@ int main() {
 		// Set the point source uniforms
 		// P 1
 
-		cubeShaderProgram.setVec3("pointLights[0].ambient",  0.2f* pointLightColor);
+		cubeShaderProgram.setVec3("pointLights[0].ambient", 0.2f* pointLightColor);
 		cubeShaderProgram.setVec3("pointLights[0].diffuse", .6f * pointLightColor); // darken diffuse light a bit
 		cubeShaderProgram.setVec3("pointLights[0].specular", 1.0f * pointLightColor);
 		cubeShaderProgram.setVec3("pointLights[0].position", lanternSourcePosition);
@@ -879,7 +876,7 @@ int main() {
 		cubeShaderProgram.setVec3("pointLights[1].ambient", 0.2f* pointLightColor1);
 		cubeShaderProgram.setVec3("pointLights[1].diffuse", .6f * pointLightColor1); // darken diffuse light a bit
 		cubeShaderProgram.setVec3("pointLights[1].specular", 1.0f * pointLightColor1);
-		cubeShaderProgram.setVec3("pointLights[1].position", lightSourcePosition + glm::vec3(5,0,0));
+		cubeShaderProgram.setVec3("pointLights[1].position", lightSourcePosition + glm::vec3(5, 0, 0));
 		// P 3
 		cubeShaderProgram.setVec3("pointLights[2].ambient", 0.2f* pointLightColor2);
 		cubeShaderProgram.setVec3("pointLights[2].diffuse", .6f * pointLightColor2); // darken diffuse light a bit
@@ -903,6 +900,12 @@ int main() {
 
 		// Bind the specular map
 		//glActiveTexture(GL_TEXTURE1);
+		float terrainYScale = glm::length(surfaceModel[1]);
+
+		//camera.Position.y = *surface.findHeight(camera.Position.x, camera.Position.z, 250, 250)*terrainYScale + 1.0f;
+		cubeTransform = glm::mat4(1);
+		cubeTransform = glm::translate(cubeTransform, glm::vec3(camera.Position + camera.Front));
+
 
 		glBindVertexArray(cubeVAO);
 		glEnableVertexAttribArray(0);
@@ -910,47 +913,51 @@ int main() {
 		glEnableVertexAttribArray(2);
 
 		glBindTexture(GL_TEXTURE1, 0);
-		for (int i = 0; i <(userBlocks.size() >= 1 ? 1 : 0); i++) {
-				
-			float terrainYScale = glm::length(surfaceModel[1]);
+		for (int i = 0; i < (userBlocks.size() >= 1 ? 1 : 0); i++) {
+
 			//if (cubePos.y < surface.lowestLow * glm::length(surfaceModel[1]) - 0.5)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, 0.001f, 0));
 
 			float modelZBoundInWorld = myFirstModel.zBound*.1 + userBlocks.at(i).z;
 			glm::mat4 modelMat = glm::mat4(1);
 			if (destination != glm::vec3(NULL)) {
+				/*
 
-				glm::vec3 travelDirection = glm::normalize(destination - cubePos);
+					glm::vec3 travelDirection = glm::normalize(destination - cubePos);
 
-				glm::vec2 originVec(0, -1);
-				glm::vec2 v1 = glm::vec2(cubePos.x + boatVec.x, cubePos.z + boatVec.z);
-				glm::vec2 v2 = glm::vec2(destination.x, destination.z);
+					glm::vec2 originVec(0, -1);
+					glm::vec2 v1 = glm::vec2(cubePos.x + boatVec.x, cubePos.z + boatVec.z);
+					glm::vec2 v2 = glm::vec2(destination.x, destination.z);
 
-				float cosTheta = glm::dot(originVec,v1)/(glm::length(originVec)*glm::length(v1));
-				float cosPhi = glm::dot(originVec,v2)/(glm::length(originVec)*glm::length(v2));
+					float cosTheta = glm::dot(originVec,v1)/(glm::length(originVec)*glm::length(v1));
+					float cosPhi = glm::dot(originVec,v2)/(glm::length(originVec)*glm::length(v2));
 
-				float degTheta = glm::degrees(acosf(cosTheta));
-				float degPhi = glm::degrees(acosf(cosPhi));
+					float degTheta = glm::degrees(acosf(cosTheta));
+					float degPhi = glm::degrees(acosf(cosPhi));
 
-				glm::vec3 modelFront = glm::column(cubeModel, 2);
-				
-				float surfaceHeight = *surface.findHeight(cubePos.x, cubePos.z, 250, 250)*terrainYScale;
+					glm::vec3 modelFront = glm::column(cubeModel, 2);
 
-				cubeTransform[3].y = surfaceHeight + 2.5f + (surfaceHeight == surface.lowestLow * terrainYScale ? 2.5*sinf(0.1*timeValue) : 0);
-					rotateModelTowardsVector(glm::vec2(-(destination - cubePos).x, (destination - cubePos).z), cubeModel);
+					float surfaceHeight = *surface.findHeight(cubePos.x, cubePos.z, 250, 250)*terrainYScale;
 
-					cubeTransform = glm::translate(cubeTransform, 2.0f*glm::vec3(travelDirection.x, 0, travelDirection.z));
+					cubeTransform[3].y = surfaceHeight + 2.5f + (surfaceHeight == surface.lowestLow * terrainYScale ? 2.5*sinf(0.1*timeValue) : 0);
+						rotateModelTowardsVector(glm::vec2(-(destination - cubePos).x, (destination - cubePos).z), cubeModel);
 
-				cubeShaderProgram.setMat4("model", cubeModel);
-				cubeShaderProgram.setMat4("transform", cubeTransform);				
-				myFirstModel.Draw(cubeShaderProgram);
+						cubeTransform = glm::translate(cubeTransform, 0.002f*glm::vec3(travelDirection.x, 0, travelDirection.z));
 
+					cubeShaderProgram.setMat4("model", cubeModel);
+					cubeShaderProgram.setMat4("transform", cubeTransform);
+					myFirstModel.Draw(cubeShaderProgram);
+
+				}*/
 			}
-		
-			else {
+
+			{
 				cubeShaderProgram.setMat4("model", cubeModel);
 				cubeShaderProgram.setMat4("transform", cubeTransform);
 				myFirstModel.Draw(cubeShaderProgram);
+
+
 			}
+
 		}
 
 		glDisableVertexAttribArray(2);
@@ -975,13 +982,13 @@ int main() {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		backgroundShaderProgram.use();
-		mouseSurfaceTransform = glm::translate(glm::mat4(1), glm::vec3(((visibleCursorX - (SCR_WIDTH/2)) * 2 / SCR_WIDTH), 
+		mouseSurfaceTransform = glm::translate(glm::mat4(1), glm::vec3(((visibleCursorX - (SCR_WIDTH / 2)) * 2 / SCR_WIDTH),
 			((visibleCursorY - (SCR_HEIGHT / 2)) * 2 / SCR_HEIGHT),
 			0.0));
 		mouseSurfaceTransform = glm::rotate(mouseSurfaceTransform, glm::radians(180.0f), glm::vec3(1, 0, 0));
 
 		mouseSurfaceTransform = glm::scale(mouseSurfaceTransform, glm::vec3(0.02, 0.02, 0.02));
-		
+
 		backgroundShaderProgram.setMat4("transform", mouseSurfaceTransform);
 
 		glBindVertexArray(bgVAO);
@@ -1003,14 +1010,14 @@ int main() {
 
 		glfwSwapBuffers(mWind);
 
-	}	
-	
+	}
+
 	// Properly clean/Delete all of GLFW's resources that were allocated
 	glfwTerminate();
-	
+
 	return -1;
 
 
-		
+
 }
 

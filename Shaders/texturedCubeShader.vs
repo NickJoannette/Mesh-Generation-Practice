@@ -17,7 +17,7 @@ uniform float time;
 void main()
 {
    vec3 vertexPosition = aPos;
-   if (vertexPosition.y > .05) vertexPosition.y += 0.015*sin(2*time);
+//   if (vertexPosition.y > .05) vertexPosition.y += 0.015*sin(2*time);
    
    gl_Position = projection * view * transform * model * vec4(vertexPosition, 1.0);
    texCoord = aTexCoord;

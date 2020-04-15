@@ -46,7 +46,7 @@ uniform vec3 fragColor;
 
 uniform vec3 clickPoint;
 uniform vec3 viewPosition;
-
+uniform float time;
 
 // LIGHTING ----------
 
@@ -180,7 +180,7 @@ void main()
 float r,g,b;
 b = 0.5 - fragHeight;
 g = 0.5 + fragHeight;
-r = sin(fragHeight);
+r = 0.045;//abs(sin(0.5*time));
 
 vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
 
@@ -189,10 +189,10 @@ vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
 
 // Define static direction light source for now
 	DirLight dirLight;
-	dirLight.direction = vec3(0,-1,0);
+	dirLight.direction = vec3(1,-1,0);
 	dirLight.ambient = vec3(0.1,0.1,0.1);
-	dirLight.diffuse = vec3(0.55,0.55,0.55);
-	dirLight.specular = vec3(0.55,0.55,0.5);
+	dirLight.diffuse = vec3(0.25,0.25,0.25);
+	dirLight.specular = vec3(0.15,0.15,0.15);
 	vec3 normal = norm;
 	vec3 viewDir = normalize(viewPosition - fragPosition);
 	
@@ -271,8 +271,8 @@ vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
 	
 	// Draw the x/y origin axes
 	
-	if (abs(fragPosition.z - origin.z) < 0.1) {combinedResult = vec3(0,1,0);}
-	if (abs(fragPosition.x - origin.x) < 0.1){combinedResult = vec3(0,1,0);}
+	//if (abs(fragPosition.z - origin.z) < 0.1) {combinedResult = vec3(0,1,0);}
+	//if (abs(fragPosition.x - origin.x) < 0.1){combinedResult = vec3(0,1,0);}
 	
 	
 	
@@ -294,6 +294,6 @@ vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
 	
 	
 	 float depth = LinearizeDepth(gl_FragCoord.z)/2500.0f;
-	FragColor = vec4((combinedResult * vec3(1.0f ,1.0f,1.0f)),1);
+	FragColor = vec4((combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth)),1);
 	
 };

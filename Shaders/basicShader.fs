@@ -43,7 +43,7 @@ in vec3 fragPosition;
 
 uniform vec3 fragColor;
 
-
+uniform bool blinn;
 uniform vec3 clickPoint;
 uniform vec3 viewPosition;
 uniform float time;
@@ -79,10 +79,27 @@ vec3 CalcPointLight (PointLight light, vec3 normal, vec3 viewDir) {
 	
 	vec3 diffuseLight = light.diffuse * diffuseDot * vec3(texture(material.diffuse, texCoord));
 	
-	// Specular Lighting
+	vec3 specularLight = vec3(0,0,0);
+
+	if (blinn) {
+		
+	// Specular Lighting (BLINN PHONG)
+	vec3 lightDir   = normalize(light.position - fragPosition);
+	vec3 halfwayDir = normalize(lightDir + viewDir);
+	float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
+
+	specularLight = light.specular * spec * vec3(texture(material.specular, texCoord));  
+	
+	}
+	else {
+		// Specular Lighting
 	vec3 reflectDir = reflect(-incomingLightDirection, normal); 
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-	vec3 specularLight = light.specular * spec * vec3(texture(material.specular, texCoord));  
+	specularLight = light.specular * spec * vec3(texture(material.specular, texCoord));  
+	
+	
+	}
+	
 	
 	// Apply attenuation
 	ambientLight *= attenuationFactor;
@@ -205,7 +222,7 @@ vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
      lightingResult += CalcFlashLight(flashLight, normal, viewDir);   
 	
 	vec3 pointResult = vec3(0,0,0);
-	    for(int i = 0; i < NR_POINT_LIGHTS; i++)
+	    for(int i = 1; i < NR_POINT_LIGHTS; i++)
         pointResult += CalcPointLight(pointLights[i],normal, viewDir);    
 
 	

@@ -96,6 +96,7 @@ int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
 
 
 bool displayNormals = false;
+bool blinn = false;
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -154,6 +155,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		lightSourcePosition = camera.Position + camera.Front;
 	if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
 		displayNormals = !displayNormals;
+	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+		blinn = !blinn;
+		std::cout << "Blinn lighting: " << (blinn ? "ON" : "OFF") << std::endl; 
+	}
 	if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
 		glm::vec3 boatVec = glm::vec3(cubeModel*glm::vec4(1));
 
@@ -791,10 +796,11 @@ int main() {
 		// Set the point source uniforms
 		// P 1
 		surfaceShader.use();
+		surfaceShader.setBool("blinn", blinn);
 		surfaceShader.setInt("heightTex", 0);
 		surfaceShader.setInt("material.diffuse", 1);
 		surfaceShader.setInt("material.specular", 2);
-		surfaceShader.setFloat("material.shininess", 64);
+		surfaceShader.setFloat("material.shininess", 16);
 		surfaceShader.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
 
 		surfaceShader.setVec3("pointLights[0].ambient", 0.2f* pointLightColor);

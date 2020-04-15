@@ -26,10 +26,10 @@ void main()
 	texCoord = aTexCoord;
 	ivec2 textureSize2D = textureSize(heightTex,0);
 	ivec2 tc = ivec2(texCoord.x  , texCoord.y );
-
+	
 	fragHeight = aPos.y;//(texelFetch(heightTex, tc, 0).r);// texture(heightTex,aTexCoord).r;
 	float height = fragHeight;//clamp(fragHeight,0,0.1);
-
+	if (height < -0.3) height += 0.04*sin(0.15*time * aPos.z);
 	gl_Position = projection * view * model * transform * vec4(vec3(aPos.x,height,aPos.z), 1.0);
 		
 

@@ -17,6 +17,7 @@ public:
 	Surface(unsigned int w, unsigned int l, bool f);
 	void Draw();
 	float * findHeight(float xCoord, float zCoord, float xScale, float zScale);
+
 	~Surface();
 
 	float lowestLow = 9999999, highestHigh = -99999999;

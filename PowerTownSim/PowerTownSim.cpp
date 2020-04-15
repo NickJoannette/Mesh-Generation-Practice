@@ -233,7 +233,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 // Mouse button click callback
 // ----------------------------------------------------------------------
-Surface surface(128, 128, true);
+Surface surface( 477, 477, true);
 
 
 glm::mat4 surfaceModel = glm::mat4(1);
@@ -274,7 +274,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		 glm::vec3 travelDirection = glm::normalize(destination - cubePos);
 		 glm::vec3 modelFront = glm::column(cubeModel, 2);
 
-		 std::cout << "Found height: " << surface.findHeight(pointOfIntersection.x, pointOfIntersection.z, 7500, 7500) << std::endl;
+		 std::cout << "Found height: " << *surface.findHeight(pointOfIntersection.x, pointOfIntersection.z, 250, 250) << std::endl;
 
 		
 
@@ -511,10 +511,10 @@ int main() {
 	load2DWrappedMipMapTexture("../Textures/cursor1.png", &backgroundTexture, false);
 
 	unsigned int heightMap;
-	load2DWrappedMipMapTexture("../Textures/earthDiffuseMap.png", &heightMap, false);
+	load2DWrappedMipMapTexture("../Textures/heightMapTest1.png", &heightMap, false);
 
 	unsigned int earthDiffuseMap;
-	load2DWrappedMipMapTexture("../Textures/earthDiffuseMap.png", &earthDiffuseMap, false);
+	load2DWrappedMipMapTexture("../Textures/groundTex4.jpg", &earthDiffuseMap, false);
 
 
 	vector<std::string> faces
@@ -681,7 +681,7 @@ int main() {
 
 
 
-	surfaceModel = glm::scale(surfaceModel, glm::vec3(7500, 750, 7500));
+	surfaceModel = glm::scale(surfaceModel, glm::vec3(250, 75, 250));
 
 	//cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), glm::vec3(0, 1, 0));
 
@@ -697,7 +697,7 @@ int main() {
 		//std::cout << "FPS: " << (1.0f / deltaTime) << std::endl;
 		glfwPollEvents();
 		processInput(mWind);
-		mainWindow->clearColor(0.0025, 0, 0.035, 0.4);
+		mainWindow->clearColor(0, 0.05, 0.142, 0.4);
 
 
 		glm::mat4 view = camera.GetViewMatrix();
@@ -711,7 +711,7 @@ int main() {
 #pragma endregion
 
 
-	/*	glDepthMask(false);
+	glDepthMask(false);
 		skyBoxShader.use();
 		skyBoxShader.setMat4("projection", projection);
 		skyBoxShader.setMat4("view", glm::lookAt(glm::vec3(0,0,0), glm::vec3(0) + camera.Front, camera.Up));
@@ -726,7 +726,7 @@ int main() {
 
 		glDepthMask(true);
 
-		*/
+		
 
 
 
@@ -851,13 +851,14 @@ int main() {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, earthDiffuseMap);
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, heightMap);
+		glBindTexture(GL_TEXTURE_2D, earthDiffuseMap);
+		surfaceShader.setMat4("transform", surfaceTransform);
 		surface.Draw();
 
 
 #pragma endregion
 
-#pragma region cube drawing
+#pragma region cube drawing 
 		cubeShaderProgram.use();
 		cubeShaderProgram.setMat4("view", view);
 		cubeShaderProgram.setMat4("projection", projection);
@@ -932,7 +933,9 @@ int main() {
 
 				glm::vec3 modelFront = glm::column(cubeModel, 2);
 				
-					cubeTransform[3].y = *surface.findHeight(cubePos.x, cubePos.z, 7500, 7500)*terrainYScale + 25.0*sinf(3*timeValue) + 2.5f;
+				float surfaceHeight = *surface.findHeight(cubePos.x, cubePos.z, 250, 250)*terrainYScale;
+
+				cubeTransform[3].y = surfaceHeight + 2.5f + (surfaceHeight == surface.lowestLow * terrainYScale ? 2.5*sinf(0.1*timeValue) : 0);
 					rotateModelTowardsVector(glm::vec2(-(destination - cubePos).x, (destination - cubePos).z), cubeModel);
 
 					cubeTransform = glm::translate(cubeTransform, 2.0f*glm::vec3(travelDirection.x, 0, travelDirection.z));

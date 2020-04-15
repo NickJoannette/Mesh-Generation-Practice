@@ -1,8 +1,10 @@
 #version 330 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexCoord;
+layout (location = 2) in vec3 aNormal;
 
 out vec2 texCoord;
+out vec3 norm;
 out float fragHeight;
 out vec3 fragPosition;
 out float feedbackData;
@@ -27,11 +29,11 @@ void main()
 
 	fragHeight = aPos.y;//(texelFetch(heightTex, tc, 0).r);// texture(heightTex,aTexCoord).r;
 	float height = fragHeight;//clamp(fragHeight,0,0.1);
-		if (height == -0.5) height += 0.033333 * sin(3*time);
 
 	gl_Position = projection * view * model * transform * vec4(vec3(aPos.x,height,aPos.z), 1.0);
 		
 
+	norm = aNormal;
 	fragPosition = vec3( transform * model * vec4(vec3(aPos.x,height,aPos.z), 1.0));
 
 }

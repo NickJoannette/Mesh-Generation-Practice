@@ -50,6 +50,7 @@ uniform float time;
 
 // LIGHTING ----------
 
+
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 {
     vec3 lightDir = normalize(-light.direction);
@@ -59,25 +60,25 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     // combine results
-    vec3 ambient  = light.ambient  *  vec3(1,1,1);
-    vec3 diffuse  = light.diffuse  * diff * vec3(1,1,1);
-    vec3 specular = light.specular * spec *  vec3(1,1,1);
+    vec3 ambient  = light.ambient  * vec3(1);
+    vec3 diffuse  = light.diffuse  * diff * vec3(1);
+    vec3 specular = light.specular * spec * vec3(texture(material.specular, texCoord));
     return (ambient + diffuse + specular);
 }  
 vec3 CalcPointLight (PointLight light, vec3 normal, vec3 viewDir) {
 
 	// Calculate attenuation factor based on distance from the light to this fragment	
 	float fragToLightDistance = length(light.position - fragPosition);
-	float attenuationFactor = (125.0)/(fragToLightDistance * fragToLightDistance);
+	float attenuationFactor = (20000.0)/(fragToLightDistance * fragToLightDistance);
 
 	// Ambient Lighting
-	vec3 ambientLight = light.ambient * vec3(texture(material.diffuse, texCoord));
+	vec3 ambientLight = light.ambient * vec3(1);
 	
 	// Diffuse Lighting
 	vec3 incomingLightDirection = normalize(light.position - fragPosition);
 	float diffuseDot = max(dot(normal, incomingLightDirection), 0.0);
 	
-	vec3 diffuseLight = light.diffuse * diffuseDot * vec3(texture(material.diffuse, texCoord));
+	vec3 diffuseLight = light.diffuse * diffuseDot * vec3(1);
 	
 	vec3 specularLight = vec3(0,0,0);
 
@@ -120,7 +121,7 @@ vec3 CalcFlashLight (FlashLight light, vec3 normal, vec3 viewDir) {
 	vec3 flashLightAmbientLight = abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff)))*flashLight.color *.5f;
 	
 	float fragToFlashLightDistance = length (flashLight.position - fragPosition);
-	float flashLightAttenuationFactor = (125.0)/(fragToFlashLightDistance*fragToFlashLightDistance);
+	float flashLightAttenuationFactor = (20000.0)/(fragToFlashLightDistance*fragToFlashLightDistance);
 	
 		vec3 specularLight = vec3(0,0,0);
 
@@ -221,7 +222,7 @@ b = 0.5 - fragHeight;
 g = 0.5 + fragHeight;
 r = 0.045;//abs(sin(0.5*time));
 
-vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
+vec3 color =  vec3(r,g,b);
 
 
 // LIGHTING
@@ -321,8 +322,8 @@ vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
 	
 
 		
-	if (abs(fragPosition.z - clickPoint.z) < 0.1) {combinedResult = vec3(1,0,0);}
-	if (abs(fragPosition.x - clickPoint.x) < 0.1){combinedResult = vec3(1,0,0);}
+	//if (abs(fragPosition.z - clickPoint.z) < 0.1) {combinedResult = vec3(1,0,0);}
+	//if (abs(fragPosition.x - clickPoint.x) < 0.1){combinedResult = vec3(1,0,0);}
 	
 	// Draw the x/y origin axes
 	
@@ -333,7 +334,7 @@ vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
 	
 	 float depth = LinearizeDepth(gl_FragCoord.z)/125.0f;
 	 
-	FragColor = vec4((combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth)),1);
+	FragColor = vec4((combinedResult * vec3(1.0f - 0,1.0f - 0,1.0f - 0)),1);
 		
 
 	

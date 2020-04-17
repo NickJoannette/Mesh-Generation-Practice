@@ -6,3 +6,9 @@
 PowerTownSim.sln
 /PowerTownSim/Debug/**
 /PowerTownSim/x64/**
+/Models/**
+/packages/**
+/Release/**
+/Textures/**
+/x64/**
+/Audio/**

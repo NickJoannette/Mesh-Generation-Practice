@@ -1,5 +1,6 @@
 #include "Surface.h"
 #include "stb_image.h"
+#include "stbi_image_write.h"
 #include <chrono>
 
 /*
@@ -13,7 +14,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 {
 	auto start = std::chrono::steady_clock::now();
 
-	std::string path = "../Textures/heightMapTest1.png";
+	std::string path = "../Textures/testHeightSmall.png";
 
 	int iWidth, iHeight, channels;
 	unsigned char *image = stbi_load(path.c_str(), &iWidth, &iHeight, &channels, STBI_rgb_alpha);
@@ -76,18 +77,17 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 				float x = (float) i / w - 0.5f;
 
 				float y = ((float)(*(heightMap + h++))) / 255.0 - 0.5f;
-
 				//	Position coordinates
 				*(vertices + c++) = x;
 				*(vertices + c++) = y;
 				*(vertices + c++) = z;
 				// Textures coordinates
-				*(vertices + c++) = 0.0;
-				*(vertices + c++) = 0.0;
+				*(vertices + c++) = x + 0.5f;
+				*(vertices + c++) = z + 0.5f;
 				// Normal coordinates
-				*(vertices + c++) = 0.0;
-				*(vertices + c++) = 0.0;
-				*(vertices + c++) = 0.0;
+				*(vertices + c++) = -5;
+				*(vertices + c++) = -5;
+				*(vertices + c++) = -5;
 
 
 				// Add a height mapping to the height map data structure (SuperMap);
@@ -139,7 +139,6 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 			v2x = vertices[v2Ind], v2y = vertices[v2Ind + 1], v2z = vertices[v2Ind + 2];
 			v3x = vertices[v3Ind], v3y = vertices[v3Ind + 1], v3z = vertices[v3Ind + 2];
 
-
 			// Cross product
 			float cx, cy, cz;
 	
@@ -153,35 +152,37 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 			c2y = (v1x-v2x) * (v3z-v2z) - (v1z-v2z) * (v3x-v2x);
 			c2z = (v1x-v2x) * (v3y-v2y) - (v1y-v2y) * (v3x-v2x);
 
-			glm::vec3 vec1(v3x - v1x, v3y - v1y, v3z - v1z);
-			glm::vec3 vec2(v2x - v1x, v2y - v1y, v2z - v1z);
+			glm::vec3 vec1(v3x - v2x, v3y - v2y, v3z - v2z);
+			glm::vec3 vec2(v1x - v2x, v1y - v2y, v1z - v2z);
 
-			glm::vec3 faceNormal = glm::cross(vec2, vec1);
+			glm::vec3 faceNormal = glm::cross(vec1,vec2);
 
 
 
 			// Set the normalalized normal coordinates in the vertex array
 
 			faceNormal = glm::normalize(faceNormal);
-			vertices[v1Ind + 5] = faceNormal.x;
-			vertices[v1Ind + 6] = faceNormal.y;
-			vertices[v1Ind + 7] = faceNormal.z;
-			vertices[v2Ind + 5] = faceNormal.x;
-			vertices[v2Ind + 6] = faceNormal.y;
-			vertices[v2Ind + 7] = faceNormal.z;
-			vertices[v3Ind + 5] = faceNormal.x;
-			vertices[v3Ind + 6] = faceNormal.y;
-			vertices[v3Ind + 7] = faceNormal.z;
-
+			
+			if (vertices[v1Ind + 6] == -5) {
+				vertices[v1Ind + 5] = faceNormal.x;
+				vertices[v1Ind + 6] = faceNormal.y;
+				vertices[v1Ind + 7] = faceNormal.z;
+				vertices[v2Ind + 5] = faceNormal.x;
+				vertices[v2Ind + 6] = faceNormal.y;
+				vertices[v2Ind + 7] = faceNormal.z;
+				vertices[v3Ind + 5] = faceNormal.x;
+				vertices[v3Ind + 6] = faceNormal.y;
+				vertices[v3Ind + 7] = faceNormal.z;
+			}
 			// Indices for a diagonally opposite face
-			*(indices + ct++) = (w*l) - c - 1 - l;
-			*(indices + ct++) = (w*l) - c - 2;
-			*(indices + ct++) = (w*l) - c - 1;
+			*(indices + ct++) = c + 1;
+			*(indices + ct++) = c + w;
+			*(indices + ct++) = c + w + 1;
 
 			// Calculate its normal
-			v1Ind = 8 * ((w*l) - c - 1 - l);
-			v2Ind = 8 * ((w*l) - c - 2);
-			v3Ind = 8 * ((w*l) - c - 1);
+			v1Ind = 8 *  (c + 1);
+			v2Ind = 8 * (c + w);
+			v3Ind = 8 * (c+w+1);
 			v1x = vertices[v1Ind], v1y = vertices[v1Ind + 1], v1z = vertices[v1Ind + 2];
 			v2x = vertices[v2Ind], v2y = vertices[v2Ind + 1], v2z = vertices[v2Ind + 2];
 			v3x = vertices[v3Ind], v3y = vertices[v3Ind + 1], v3z = vertices[v3Ind + 2];
@@ -204,19 +205,19 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 
 			// Set the normalalized normal coordinates in the vertex array
+			if (vertices[v1Ind + 6] == -5) {
 
-			faceNormal = glm::normalize(faceNormal);
-			vertices[v1Ind + 5] = faceNormal.x;
-			vertices[v1Ind + 6] = faceNormal.y;
-			vertices[v1Ind + 7] = faceNormal.z;
-			vertices[v2Ind + 5] = faceNormal.x;
-			vertices[v2Ind + 6] = faceNormal.y;
-			vertices[v2Ind + 7] = faceNormal.z;
-			vertices[v3Ind + 5] = faceNormal.x;
-			vertices[v3Ind + 6] = faceNormal.y;
-			vertices[v3Ind + 7] = faceNormal.z;
-
-
+				faceNormal = glm::normalize(faceNormal);
+				vertices[v1Ind + 5] = faceNormal.x;
+				vertices[v1Ind + 6] = faceNormal.y;
+				vertices[v1Ind + 7] = faceNormal.z;
+				vertices[v2Ind + 5] = faceNormal.x;
+				vertices[v2Ind + 6] = faceNormal.y;
+				vertices[v2Ind + 7] = faceNormal.z;
+				vertices[v3Ind + 5] = faceNormal.x;
+				vertices[v3Ind + 6] = faceNormal.y;
+				vertices[v3Ind + 7] = faceNormal.z;
+			}
 		}
 
 		end = std::chrono::steady_clock::now();
@@ -227,7 +228,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 		start = std::chrono::steady_clock::now();
 		
-
+/*
 		// Now set each vertex normal to the average of the surrounding triangles
 		for (int i = 0; i < (8*w*l)/width; i++) {
 			int ind = i * 8;
@@ -271,6 +272,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 		//	std::cout << "Averaged normal : (" << nX << "," << nY << "," << nZ << ")" << std::endl;
 
 		}
+	*/
 
 		
 		end = std::chrono::steady_clock::now();
@@ -360,6 +362,20 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 			indices.push_back(i + length + 1);
 		}
 		*/
+
+	int nic = 0;
+	std::string writePath = "../Textures/TestMap.png";
+
+	for (unsigned char *pn = new_image; pn != new_image + img_size; pn += channels) {
+
+		*(pn) = (uint8_t)((*(vertices + nic + 5)*0.5 + 0.5) * 255);
+		*(pn + 1) = (uint8_t)((*(vertices + nic + 6)*0.5 + 0.5) * 255);
+		*(pn + 2) = (uint8_t)((*(vertices + nic + 7)*0.5 + 0.5) * 255);
+		nic += 8;
+	}
+	stbi_write_png(writePath.c_str(), width, length, channels, new_image, width*channels);
+
+
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
 	glGenBuffers(1, &ebo);
@@ -377,6 +393,11 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
 
+	// Clear allocated memory now that it's been sent to the GPU
+
+
+	delete[8 * w*l] vertices;
+	delete[6 * (w - 1)*(l - 1)] indices;
 
 	setPossibleValues();
 

@@ -68,7 +68,7 @@ vec3 CalcPointLight (PointLight light, vec3 normal, vec3 viewDir) {
 
 	// Calculate attenuation factor based on distance from the light to this fragment	
 	float fragToLightDistance = length(light.position - fragPosition);
-	float attenuationFactor = (1.0)/(1.0 + 0.09*fragToLightDistance + 0.032*(fragToLightDistance * fragToLightDistance));
+	float attenuationFactor = (125.0)/(fragToLightDistance * fragToLightDistance);
 
 	// Ambient Lighting
 	vec3 ambientLight = light.ambient * vec3(texture(material.diffuse, texCoord));
@@ -120,15 +120,37 @@ vec3 CalcFlashLight (FlashLight light, vec3 normal, vec3 viewDir) {
 	vec3 flashLightAmbientLight = abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff)))*flashLight.color *.5f;
 	
 	float fragToFlashLightDistance = length (flashLight.position - fragPosition);
-	float flashLightAttenuationFactor = (1.0)/(1.0 + 0.09*fragToFlashLightDistance + 0.032*(fragToFlashLightDistance * fragToFlashLightDistance));
+	float flashLightAttenuationFactor = (125.0)/(fragToFlashLightDistance*fragToFlashLightDistance);
 	
-	vec3 flashLightSpecularLight =  abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff)))*flashLight.color * flashLightAttenuationFactor *
+		vec3 specularLight = vec3(0,0,0);
+
+	if (blinn) {
+		
+	// Specular Lighting (BLINN PHONG)
+	vec3 lightDir   = normalize(light.position - fragPosition);
+	vec3 halfwayDir = normalize(lightDir + viewDir);
+	float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
+
+	specularLight = light.color * spec * vec3(texture(material.specular, texCoord));  
+	
+	}
+	else {
+		// Specular Lighting
+	vec3 reflectDir = reflect(-fragToFlashLightDirection, normal); 
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+	specularLight = light.color * spec * vec3(texture(material.specular, texCoord));  
+	
+	
+	}
+	
+	specularLight =   abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff)))*flashLight.color * flashLightAttenuationFactor *
 (	pow(abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff))), material.shininess)* vec3(texture(material.specular, texCoord)) );
 	
-	flashLightSpecularLight *= flashLightAttenuationFactor;
+	
+	specularLight *= flashLightAttenuationFactor;
 	flashLightAmbientLight *= flashLightAttenuationFactor;
 
-	if (theta > flashLight.cutOff) return (flashLightAmbientLight + flashLightSpecularLight);
+	if (theta > flashLight.cutOff) return (flashLightAmbientLight + specularLight);
 	else return vec3(0,0,0);
 	
 }
@@ -145,7 +167,7 @@ out vec4 FragColor;
 
 
 float near = 0.1; 
-float far  = 2500.0; 
+float far  = 125.0; 
   
 float LinearizeDepth(float depth) 
 {
@@ -280,9 +302,25 @@ vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
 	}
 	
 	*/
-	vec3 combinedResult = pointResult + (color * lightingResult);
+
+
 	
 	
+	
+	
+	
+	
+  //  FragColor.rgb = pow(fragColor.rgb, vec3(1.0/gamma));
+	
+	
+	
+	float gamma = 2.2;
+	color = pow(color,vec3(1.0/gamma));
+	vec3 combinedResult = color*(pointResult +lightingResult);
+	
+	
+
+		
 	if (abs(fragPosition.z - clickPoint.z) < 0.1) {combinedResult = vec3(1,0,0);}
 	if (abs(fragPosition.x - clickPoint.x) < 0.1){combinedResult = vec3(1,0,0);}
 	
@@ -293,24 +331,11 @@ vec3 color = vec3(r,g,b); //*  vec3(texture(material.diffuse,texCoord));
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	 float depth = LinearizeDepth(gl_FragCoord.z)/2500.0f;
+	 float depth = LinearizeDepth(gl_FragCoord.z)/125.0f;
+	 
 	FragColor = vec4((combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth)),1);
+		
+
+	
 	
 };

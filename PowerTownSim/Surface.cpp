@@ -1,5 +1,6 @@
 #include "Surface.h"
 #include "stb_image.h"
+#include <chrono>
 
 /*
 void visualizeImageWrite() {
@@ -10,6 +11,7 @@ void visualizeImageWrite() {
 
 Surface::Surface(unsigned int w, unsigned int l, bool f)
 {
+	auto start = std::chrono::steady_clock::now();
 
 	std::string path = "../Textures/heightMapTest1.png";
 
@@ -39,22 +41,27 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	stbi_image_free(image);
 
 	
+
+
+	auto end = std::chrono::steady_clock::now();
+
+	std::cout << "Elapsed time for HEightmap read : "
+		<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
 	
 	
 	
-	
-	
-	
+
+	 start = std::chrono::steady_clock::now();
+
+
 
 	// MEMBER INITIALIZATIONS
 	width = w; length = l; flat = f;
 
-
+	vertices = new float[w*l*8];
 	HeightMap = new heightMapping[(w + 1)*(l + 1)];
 	PossibleXValues = new float[length];
 	PossibleZValues = new float[width];
-	std::cout << (l*w) << std::endl;
-	std::cout << (iWidth*iHeight) << std::endl;
 	float normalizer = width >= length ? width : length;
 	// Algorithm for generating the plane's vertex data
 	int h = 0;
@@ -62,6 +69,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	{
 
 		// Create the vertices for the grid. The length of the grid is in the z axis, the width in the x axis.
+		int c = 0;
 		for (int j = 0; j < l; j++) {
 			float z = (float) j / l - 0.5f;
 			for (int i = 0; i < w; i++) {
@@ -70,30 +78,37 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 				float y = ((float)(*(heightMap + h++))) / 255.0 - 0.5f;
 
 				//	Position coordinates
-				vertices.push_back(x);
-				vertices.push_back(y);
-				vertices.push_back(z);
+				*(vertices + c++) = x;
+				*(vertices + c++) = y;
+				*(vertices + c++) = z;
 				// Textures coordinates
-				vertices.push_back(0.0);
-				vertices.push_back(0.0);
+				*(vertices + c++) = 0.0;
+				*(vertices + c++) = 0.0;
 				// Normal coordinates
-				vertices.push_back(0.0);
-				vertices.push_back(0.0);
-				vertices.push_back(0.0);
+				*(vertices + c++) = 0.0;
+				*(vertices + c++) = 0.0;
+				*(vertices + c++) = 0.0;
+
 
 				// Add a height mapping to the height map data structure (SuperMap);
-				heightMapping hm{ x, z, y };
-				*(HeightMap + h - 1) = hm;
+				//heightMapping hm{ x, z, y };
+				//*(HeightMap + h - 1) = hm;
 
-				SuperMap.insert(std::make_pair(x, zHeightMapping{ z , y }));
+				//SuperMap.insert(std::make_pair(x, zHeightMapping{ z , y }));
 
 			}
 		}
 
 		// Calculate face normals
 
+		end = std::chrono::steady_clock::now();
+
+		std::cout << "Elapsed time for initial vertex creation : "
+			<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
 
 
+
+		start = std::chrono::steady_clock::now();
 
 
 
@@ -101,17 +116,19 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 		// Creat the first pass of triangles
 		
-		int c = 0;
+		indices = new GLuint[6*(w-1)*(l-1)];
+		 c = 0;
+		 int ct = 0;
 		for (int i = 0; i < (w-1)*(l-1); i++, c++){
 			if ((c + 1) % w == 0) ++c;
 			// To me, this is clockwise... Camera view matrix inversion causing confusion? Not sure... But 
 			// GL says it's CCW
 
 			// Indices for one face
-			indices.push_back(c + l);
-			indices.push_back(c + 1);
-			indices.push_back(c);
-
+			*(indices + ct++) = c + l;
+			*(indices + ct++) = c + 1;
+			*(indices + ct++) = c;
+	
 			// Calculate its normal
 			unsigned int v1Ind = 8 * (c + l);
 			unsigned int v2Ind = 8 * (c + 1);
@@ -157,9 +174,9 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 			vertices[v3Ind + 7] = faceNormal.z;
 
 			// Indices for a diagonally opposite face
-			indices.push_back((w*l) - c - 1 - l);
-			indices.push_back((w*l) - c - 2);
-			indices.push_back((w*l) - c - 1);
+			*(indices + ct++) = (w*l) - c - 1 - l;
+			*(indices + ct++) = (w*l) - c - 2;
+			*(indices + ct++) = (w*l) - c - 1;
 
 			// Calculate its normal
 			v1Ind = 8 * ((w*l) - c - 1 - l);
@@ -202,9 +219,17 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 		}
 
-		/*
+		end = std::chrono::steady_clock::now();
+
+		std::cout << "Elapsed time for initial normal creation : "
+			<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
+
+
+		start = std::chrono::steady_clock::now();
+		
+
 		// Now set each vertex normal to the average of the surrounding triangles
-		for (int i = 0; i < vertices.size()/width; i++) {
+		for (int i = 0; i < (8*w*l)/width; i++) {
 			int ind = i * 8;
 			float nX, nY, nZ;
 			// If it's the first row of vertices
@@ -243,12 +268,15 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 			vertices[ind + 6] = nY;
 			vertices[ind + 7] = nZ;
 
-			std::cout << "Averaged normal : (" << nX << "," << nY << "," << nZ << ")" << std::endl;
-
+		//	std::cout << "Averaged normal : (" << nX << "," << nY << "," << nZ << ")" << std::endl;
 
 		}
 
-		*/
+		
+		end = std::chrono::steady_clock::now();
+
+		std::cout << "Elapsed time for averaged normal creation : "
+			<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
 
 	}
 		/*
@@ -337,7 +365,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	glGenBuffers(1, &ebo);
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, w*l*8* sizeof(float), vertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
@@ -345,7 +373,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*(w-1)*(l-1) * sizeof(GLuint), indices, GL_STATIC_DRAW);
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
 
@@ -393,7 +421,7 @@ void Surface::Draw()
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, 6*(width-1)*(length-1), GL_UNSIGNED_INT, 0);
 	glDisableVertexAttribArray(2);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(0);

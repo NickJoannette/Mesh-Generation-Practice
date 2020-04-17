@@ -43,9 +43,9 @@ private:
 	float * PossibleXValues;
 	float * PossibleZValues;
 
-	std::vector <float> vertices;
+	float * vertices;
 	
-	std::vector <GLuint> indices;
+	GLuint * indices;
 
 	// Geometric variables
 

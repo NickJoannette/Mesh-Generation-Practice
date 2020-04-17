@@ -1,12 +1,18 @@
 #include "OpenGLWindow.h"
 #include <iostream>
+#include <chrono>
 
 OpenGLWindow::OpenGLWindow(float WIDTH, float HEIGHT)
 {
+	auto start = std::chrono::steady_clock::now();
+
+
+
+
 	this->WIDTH = WIDTH;
 	this->HEIGHT = HEIGHT;
 	this->ASPECT_RATIO = WIDTH / HEIGHT;
-
+	
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -29,6 +35,13 @@ OpenGLWindow::OpenGLWindow(float WIDTH, float HEIGHT)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
+
+
+
+	auto end = std::chrono::steady_clock::now();
+
+	std::cout << "Elapsed time for WINDOW creation : "
+		<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
 }
 
 

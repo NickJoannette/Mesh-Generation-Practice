@@ -37,8 +37,7 @@ OpenGLWindow * mainWindow = new OpenGLWindow(SCR_WIDTH, SCR_HEIGHT);
 GLFWwindow * mWind = mainWindow->glWindow();
 Camera camera(glm::vec3(0, 1, 0));
 
-Model myFirstModel = Model("../Models/myTests/whaleDiver.obj");
-Model itemOnBoat = Model("../Models/myTests/camoboat.obj");
+//Model myFirstModel = Model("../Models/myTests/whaleDiver.obj");
 glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f);
 
 std::vector<glm::vec3> userBlocks;
@@ -804,29 +803,30 @@ int main() {
 		surfaceShader.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
 
 		surfaceShader.setVec3("pointLights[0].ambient", 0.2f* pointLightColor);
-		surfaceShader.setVec3("pointLights[0].diffuse", .6f * pointLightColor); // darken diffuse light a bit
-		surfaceShader.setVec3("pointLights[0].specular", 5.0f * pointLightColor);
+		surfaceShader.setVec3("pointLights[0].diffuse", 0.4f*pointLightColor); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[0].specular",  pointLightColor);
 		surfaceShader.setVec3("pointLights[0].position", lanternSourcePosition);
 		// P 2
 		surfaceShader.setVec3("pointLights[1].ambient", 0.2f* pointLightColor1);
-		surfaceShader.setVec3("pointLights[1].diffuse", 3.0f * pointLightColor1); // darken diffuse light a bit
-		surfaceShader.setVec3("pointLights[1].specular", 5.0f * pointLightColor1);
+		surfaceShader.setVec3("pointLights[1].diffuse", 0.4f*pointLightColor1); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[1].specular",  pointLightColor1);
 		surfaceShader.setVec3("pointLights[1].position", lightSourcePosition + glm::vec3(5, 0, 0));
 		// P 3
-		surfaceShader.setVec3("pointLights[2].ambient", 0.2f* pointLightColor2);
-		surfaceShader.setVec3("pointLights[2].diffuse", 3.0f * pointLightColor2); // darken diffuse light a bit
-		surfaceShader.setVec3("pointLights[2].specular", 5.0f * pointLightColor2);
+		surfaceShader.setVec3("pointLights[2].ambient", 0.2f*pointLightColor2);
+		surfaceShader.setVec3("pointLights[2].diffuse", 0.4f* pointLightColor2); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[2].specular",  pointLightColor2);
 		surfaceShader.setVec3("pointLights[2].position", lightSourcePosition + glm::vec3(11, 0, 0));
 		// P 4
 		surfaceShader.setVec3("pointLights[3].ambient", 0.2f* pointLightColor3);
-		surfaceShader.setVec3("pointLights[3].diffuse", 3.0f * pointLightColor3); // darken diffuse light a bit
-		surfaceShader.setVec3("pointLights[3].specular", 5.0f * pointLightColor3);
+		surfaceShader.setVec3("pointLights[3].diffuse", 0.4f* pointLightColor3); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[3].specular",  pointLightColor3);
 		surfaceShader.setVec3("pointLights[3].position", lightSourcePosition + glm::vec3(15, 0, 0));
 
 
 		// Set the flashLight source uniforms6
 		surfaceShader.setVec3("flashLight.position", rayPosition);
 		surfaceShader.setVec3("flashLight.direction", rayDirection);
+		surfaceShader.setVec3("flashLight.color", glm::normalize(rayColor));
 
 		/* ------------------------------- */
 
@@ -852,6 +852,8 @@ int main() {
 		glBindTexture(GL_TEXTURE_2D, earthDiffuseMap);
 		surfaceShader.setMat4("transform", surfaceTransform);
 		surface.Draw();
+
+
 		if (displayNormals) {
 			normalDisplayShader.use();
 			normalDisplayShader.setMat4("view", view);
@@ -923,7 +925,7 @@ int main() {
 
 			//if (cubePos.y < surface.lowestLow * glm::length(surfaceModel[1]) - 0.5)cubeTransform = glm::translate(cubeTransform, glm::vec3(0, 0.001f, 0));
 
-			float modelZBoundInWorld = myFirstModel.zBound*.1 + userBlocks.at(i).z;
+			//float modelZBoundInWorld = myFirstModel.zBound*.1 + userBlocks.at(i).z;
 			glm::mat4 modelMat = glm::mat4(1);
 			if (destination != glm::vec3(NULL)) {
 				/*
@@ -959,7 +961,7 @@ int main() {
 			{
 				cubeShaderProgram.setMat4("model", cubeModel);
 				cubeShaderProgram.setMat4("transform", cubeTransform);
-				myFirstModel.Draw(cubeShaderProgram);
+			//	myFirstModel.Draw(cubeShaderProgram);
 
 
 			}

@@ -34,6 +34,6 @@ void main()
 		
 
 	norm = aNormal;
-	fragPosition = vec3( transform * model * vec4(vec3(aPos.x,height,aPos.z), 1.0));
+	fragPosition = vec3(  model * vec4(vec3(aPos.x,height,aPos.z), 1.0));
 
 }

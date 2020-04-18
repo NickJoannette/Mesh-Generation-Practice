@@ -12,8 +12,10 @@
 #include "MyMesh.h"
 #include "UI_InputManager.h"
 #include "UI_Renderer.h"
+#include "WorldObjectRenderer.h"
+#include "WorldObject.h"
 #include "TextureManager.h"
-
+#include "Light_Orb.h"
 #include <irrKlang/irrKlang.h>
 using namespace irrklang;
 #define STB_IMAGE_IMPLEMENTATION
@@ -36,10 +38,6 @@ Camera camera(mainWindow, glm::vec3(0, 1, 0));
 glm::vec3 lightSourcePosition = glm::vec3(4.75, 2.5, 4.75);
 
 
-
-Surface surface(256, 256, true);
-glm::mat4 surfaceModel = glm::mat4(1);
-glm::mat4 surfaceTransform = glm::mat4(1);
 
 int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
 	if (glm::length(clickPoint) < 0.1) return -1;
@@ -71,11 +69,21 @@ int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
 
 
 int main() {
+	// Shaders initialization
+	Shader skyBoxShader("../Shaders/skyboxShader.vs", "../Shaders/skyboxShader.fs", "T");
+	Shader lightSourceShaderProgram("../Shaders/lightSourceShader.vs", "../Shaders/lightSourceShader.fs", "G");
+	Shader cubeShaderProgram("../Shaders/texturedCubeShader.vs", "../Shaders/texturedCubeShader.fs", "G");
+	Shader backgroundShaderProgram("../Shaders/backgroundTextureShader.vs", "../Shaders/backgroundTextureShader.fs", "G");
+	Shader surfaceShader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
+	Shader normalDisplayShader("../Shaders/normalDisplayShader.vs", "../Shaders/normalDisplayShader.gs", "../Shaders/normalDisplayShader.fs", "T");
+
+
 	// Input managers
 	UI_InputManager UI_InputManager(mWind, &camera);
 
 	// Renderers
 	UI_Renderer UI_Renderer(&UI_InputManager);
+	WorldObjectRenderer WOR(&camera);
 
 	// Resource managers
 
@@ -84,12 +92,8 @@ int main() {
 
 #pragma endregion
 
-	Shader skyBoxShader("../Shaders/skyboxShader.vs", "../Shaders/skyboxShader.fs", "T");
-	Shader lightSourceShaderProgram("../Shaders/lightSourceShader.vs", "../Shaders/lightSourceShader.fs", "G");
-	Shader cubeShaderProgram("../Shaders/texturedCubeShader.vs", "../Shaders/texturedCubeShader.fs", "G");
-	Shader backgroundShaderProgram("../Shaders/backgroundTextureShader.vs", "../Shaders/backgroundTextureShader.fs", "G");
-	Shader surfaceShader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
-	Shader normalDisplayShader("../Shaders/normalDisplayShader.vs", "../Shaders/normalDisplayShader.gs", "../Shaders/normalDisplayShader.fs", "T");
+
+	Light_Orb * test1 = new Light_Orb(&lightSourceShaderProgram);
 
 	unsigned int heightMap;
 	Utility::load2DWrappedMipMapTexture("../Textures/TestMap.png", &heightMap, false);
@@ -99,52 +103,6 @@ int main() {
 
 	unsigned int testMap;
 	Utility::load2DWrappedMipMapTexture("../Textures/testHeight.png", &testMap, false);
-
-	/*vector<std::string> faces
-	{
-		"../Textures/SkyBox/right.jpg",
-			"../Textures/SkyBox/left.jpg",
-			"../Textures/SkyBox/top.jpg",
-			"../Textures/SkyBox/bottom.jpg",
-			"../Textures/SkyBox/front.jpg",
-			"../Textures/SkyBox/back.jpg"
-	};
-	unsigned int cubemapTexture = loadCubemap(faces);
-	*/
-#pragma region background buffer objects
-	unsigned int bgVBO;
-	unsigned int bgVAO;
-	unsigned int bgEBO;
-
-	glGenBuffers(1, &bgEBO);
-	glGenBuffers(1, &bgVBO);
-	glGenVertexArrays(1, &bgVAO);
-	glBindVertexArray(bgVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, bgVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(SimpleShapes::bgVertices), SimpleShapes::bgVertices, GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bgEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(SimpleShapes::bgIndices), SimpleShapes::bgIndices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glBindVertexArray(0);
-
-#pragma endregion 
-
-
-#pragma region skybox buffer objects
-	unsigned int skyboxVBO;
-	unsigned int skyboxVAO;
-
-	glGenBuffers(1, &skyboxVBO);
-	glGenVertexArrays(1, &skyboxVAO);
-	glBindVertexArray(skyboxVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(SimpleShapes::skyboxVertices), &SimpleShapes::skyboxVertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glBindVertexArray(0);
-#pragma endregion
 
 #pragma region cube buffer objects
 	unsigned int cubeVBO;
@@ -157,7 +115,7 @@ int main() {
 	glBindVertexArray(cubeVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(SimpleShapes::cubeVertices), SimpleShapes::cubeVertices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bgEBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(SimpleShapes::bgIndices), SimpleShapes::bgIndices, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
@@ -183,42 +141,36 @@ int main() {
 
 #pragma endregion
 
-
-	//Surface mouseSurface(4, 4, true);
-	glm::mat4 mouseSurfaceModel = glm::mat4(1);
-	glm::mat4 mouseSurfaceTransform = glm::mat4(1);
-
-	backgroundShaderProgram.setMat4("model", mouseSurfaceModel);
 	glm::mat4 lightSourceTransform = glm::mat4(1);
-	backgroundShaderProgram.setBool("worldCoordinates", false);
 	cubeShaderProgram.setInt("material.diffuse", 0);
 	cubeShaderProgram.setInt("material.specular", 1);
 	cubeShaderProgram.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
 
+
+
+
+
+
+	Surface surface(1024, 1024, true);
+	glm::mat4 surfaceModel = glm::mat4(1);
+	glm::mat4 surfaceTransform = glm::mat4(1);
 	surfaceModel = glm::scale(surfaceModel, glm::vec3(2500, 500, 2500));
 
-	//cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), glm::vec3(0, 1, 0));
+	*(test1->getModel()) = glm::scale(*(test1->getModel()), glm::vec3(4));
 
 	while (!glfwWindowShouldClose(mWind))
 	{
+		mainWindow->clearColor(0.0021, 0.016, 0.046, 1.0);
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 		float timeValue = glfwGetTime();
+		test1->Update(timeValue);
+
 		glfwPollEvents();
-
-
+		//std::cout << "FPS: " << (1.0 / deltaTime) << std::endl;
 		UI_InputManager.processInput(deltaTime);
-		mainWindow->clearColor(0.0021, 0.016, 0.046, 1.0);
 
-
-		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 projection = *camera.GetProjectionMatrix();
-
-		glm::vec3 lightSourceColor = glm::vec3(1, 0, 1);
-		glm::mat4 lightSourceModel = glm::mat4(1);
-		lightSourceModel = glm::translate(lightSourceModel, lightSourcePosition);
-		lightSourceModel = glm::scale(lightSourceModel, glm::vec3(0.01f));
 
 
 
@@ -228,7 +180,19 @@ int main() {
 		// Set the point source uniforms
 		// P 1
 		surfaceShader.use();
+
+
+
 		surfaceShader.setBool("blinn", UI_InputManager.blinn);
+
+		surfaceShader.setVec3("pointLights[1].ambient", 0.2f* test1->lightColor);
+		surfaceShader.setVec3("pointLights[1].diffuse", 1.0f * test1->lightColor); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[1].specular", 1.0f * test1->lightColor);
+		surfaceShader.setVec3("pointLights[1].diffuse", 0.4f*test1->lightColor); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[1].specular", test1->lightColor);
+		surfaceShader.setVec3("pointLights[1].position", test1->getPosition());
+
+
 		surfaceShader.setInt("heightTex", 0);
 		surfaceShader.setInt("material.diffuse", 1);
 		surfaceShader.setInt("material.specular", 2);
@@ -238,8 +202,8 @@ int main() {
 		//surfaceShader.setVec3("flashLight.direction", rayDirection);
 		surfaceShader.setVec3("flashLight.color",glm::vec3(1,1,1));
 
-		surfaceShader.setMat4("view", view);
-		surfaceShader.setMat4("projection", projection);
+		surfaceShader.setMat4("view", camera.GetViewMatrix());
+		surfaceShader.setMat4("projection", *camera.GetProjectionMatrix());
 		surfaceShader.setMat4("transform", surfaceTransform);
 		surfaceShader.setMat4("model", surfaceModel);
 		surfaceShader.setVec3("fragColor", glm::vec3(0.0, 0.0, 0.35));
@@ -256,76 +220,20 @@ int main() {
 		surface.Draw();
 		if (UI_InputManager.displayNormals) {
 			normalDisplayShader.use();
-			normalDisplayShader.setMat4("view", view);
-			normalDisplayShader.setMat4("projection", projection);
+		//	normalDisplayShader.setMat4("view", view);
+		//	normalDisplayShader.setMat4("projection", projection);
 			normalDisplayShader.setMat4("model", surfaceModel);
 			surface.Draw();
 		}
-
-		/*
-		cubeShaderProgram.use();
-		cubeShaderProgram.setMat4("view", view);
-		cubeShaderProgram.setMat4("projection", projection);
-		cubeShaderProgram.setMat4("transform", cubeTransform);
-		cubeShaderProgram.setFloat("time", timeValue);
-		cubeShaderProgram.setVec3("viewPosition", camera.Position);
-
-		cubeShaderProgram.setFloat("material.shininess", 64.0);
-		cubeShaderProgram.setVec3("flashLight.position", rayPosition);
-		//cubeShaderProgram.setVec3("flashLight.direction", rayDirection);
-		cubeShaderProgram.setVec3("flashLight.color", glm::normalize(rayColor));
-		float terrainYScale = glm::length(surfaceModel[1]);
-		//camera.Position.y = *surface.findHeight(camera.Position.x, camera.Position.z, 250, 250)*terrainYScale + 1.0f;
-		cubeTransform = glm::mat4(1);
-		cubeTransform = glm::translate(cubeTransform, glm::vec3(camera.Position + camera.Front));
-		glBindVertexArray(cubeVAO);
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glEnableVertexAttribArray(2);
-		glBindTexture(GL_TEXTURE1, 0);
-
-				
-
-					glm::vec3 travelDirection = glm::normalize(destination - cubePos);
-					glm::vec2 originVec(0, -1);
-					glm::vec3 modelFront = glm::column(cubeModel, 2);
-					float surfaceHeight = *surface.findHeight(cubePos.x, cubePos.z, 250, 250)*terrainYScale;
-					cubeTransform[3].y = surfaceHeight + 2.5f + (surfaceHeight == surface.lowestLow * terrainYScale ? 2.5*sinf(0.1*timeValue) : 0);
-						rotateModelTowardsVector(glm::vec2(-(destination - cubePos).x, (destination - cubePos).z), cubeModel);
-						cubeTransform = glm::translate(cubeTransform, 0.002f*glm::vec3(travelDirection.x, 0, travelDirection.z));
-					cubeShaderProgram.setMat4("model", cubeModel);
-					cubeShaderProgram.setMat4("transform", cubeTransform);
-					myFirstModel.Draw(cubeShaderProgram);
-
-				}
-
-				cubeShaderProgram.setMat4("model", cubeModel);
-				cubeShaderProgram.setMat4("transform", cubeTransform);
-			//	myFirstModel.Draw(cubeShaderProgram);
-
-
-
-		*/
 
 		glDisableVertexAttribArray(2);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(0);
 		glBindVertexArray(0);
 
+		WOR.Render(*test1);
 
-
-
-
-
-
-
-
-
-
-		//UI_Renderer.render();
-
-
-
+		UI_Renderer.render();
 
 		glfwSwapBuffers(mWind);
 

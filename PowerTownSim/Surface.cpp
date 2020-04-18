@@ -14,7 +14,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 {
 	auto start = std::chrono::steady_clock::now();
 
-	std::string path = "../Textures/testHeightSmall.png";
+	std::string path = "../Textures/testHeight.png";
 
 	int iWidth, iHeight, channels;
 	unsigned char *image = stbi_load(path.c_str(), &iWidth, &iHeight, &channels, STBI_rgb_alpha);

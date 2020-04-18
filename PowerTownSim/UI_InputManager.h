@@ -22,10 +22,10 @@ public:
 			glfwSetWindowShouldClose(mWind, true);
 
 		if (glfwGetKey(mWind, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
-			camera->MovementSpeed -= .1f;
+			camera->MovementSpeed -= 1.0f;
 
 		if (glfwGetKey(mWind, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
-			camera->MovementSpeed += .1f;
+			camera->MovementSpeed += 1.0f;
 
 		if (glfwGetKey(mWind, GLFW_KEY_W) == GLFW_PRESS)
 			camera->ProcessKeyboard(FORWARD, deltaTime);
@@ -43,7 +43,7 @@ public:
 	};
 
 	bool displayNormals = false;
-	bool blinn = false;
+	bool blinn = true;
 	bool swapMap = false;
 	float visibleCursorY = lastY;
 	float visibleCursorX = lastX;

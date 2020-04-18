@@ -19,7 +19,8 @@ OpenGLWindow::OpenGLWindow(float WIDTH, float HEIGHT)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	//glfwWindowHint(GLFW_SAMPLES, 4);
-	window = glfwCreateWindow(WIDTH, HEIGHT, "PowerTown", NULL, NULL);
+	// glfwGetPrimaryMonitor()
+	window = glfwCreateWindow(WIDTH, HEIGHT, "PowerTown",NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -31,7 +32,7 @@ OpenGLWindow::OpenGLWindow(float WIDTH, float HEIGHT)
 
 	glewInit();
 
-	//glEnable(GL_MULTISAMPLE);
+	////glEnable(GL_MULTISAMPLE);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);

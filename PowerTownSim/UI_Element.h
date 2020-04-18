@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "MyMesh.h"
 #include "ResourceUtility.h"
-
+#include "BasicVertexGenerators.h"
 
 class UI_Renderer;
 class UI_Element
@@ -14,7 +14,7 @@ class UI_Element
 
 public:
 
-	UI_Element(){
+	UI_Element() : position(new glm::vec3(1)), transform(new glm::mat4(1)), model(new glm::mat4(1)){
 
 	};
 

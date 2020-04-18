@@ -24,6 +24,9 @@ public:
 	unsigned int ID;
 	// constructor for vertex + fragment shader combo
 	// ------------------------------------------------------------------------
+	
+	Shader() {};
+	
 	Shader(const char* vertexPath, const char* fragmentPath,std::string st)
 	{
 		// 1. retrieve the vertex/fragment source code from filePath

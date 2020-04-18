@@ -26,7 +26,7 @@ enum Camera_Movement {
 // Default camera values
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
-const float SPEED = 10.0f;
+const float SPEED = 0.05f;
 const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
 
@@ -78,7 +78,7 @@ public:
 	glm::mat4 * GetProjectionMatrix() {	return &projection;}
 
 	void UpdateProjection() { 
-		projection = glm::perspective(glm::radians(Zoom), mainWindow->getAspectRatio(), 0.1f, 2500.0f);
+		projection = glm::perspective(glm::radians(Zoom), mainWindow->getAspectRatio(), 0.001f, 2.0f);
 	}
 
 		// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -100,14 +100,7 @@ public:
 			Position += glm::vec3(0, -1.0, 0) *velocity;
 		if (direction == UP)
 			Position += glm::vec3(0, 1.0, 0) *velocity;
-		//Position.y = 2;
-	/*if (Position.y < 1.0) Position.y = 1.0;
-	if (Position.y > 4.5) Position.y = 4.5;
-	if (Position.x < 0.5) Position.x = 0.5;
-	if (Position.x > 8.5) Position.x = 8.5;
-	if (Position.z < .5) Position.z = .5;
-	if (Position.z > 8.5) Position.z = 8.5;
-	*/
+
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.

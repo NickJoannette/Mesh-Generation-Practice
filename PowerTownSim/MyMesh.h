@@ -44,13 +44,12 @@ private:
 
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, numVertices * 8 * sizeof(float), vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, numVertices * 5 * sizeof(float), vertices, GL_STATIC_DRAW);
 
 		if (numIndices != NULL && indices != NULL) {
 			glGenBuffers(1, &EBO);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(GLuint), indices, GL_STATIC_DRAW);
-			std::cout << " HEre on indices with vertice count : " << numVertices << std::endl;
 		}
 
 		if (numVertices % 5 == 0 && numVertices % 8 != 0) { // Just position and tex coord (for flat UI elements like the cursor square, etc.)
@@ -61,7 +60,6 @@ private:
 		}
 
 		else {
-			std::cout << "Down here boys on num verts :" << numVertices << std::endl;
 			glEnableVertexAttribArray(0);
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 			glEnableVertexAttribArray(1);

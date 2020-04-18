@@ -22,10 +22,10 @@ public:
 			glfwSetWindowShouldClose(mWind, true);
 
 		if (glfwGetKey(mWind, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
-			camera->MovementSpeed -= 1.0f;
+			camera->MovementSpeed -= 0.01f;
 
 		if (glfwGetKey(mWind, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
-			camera->MovementSpeed += 1.0f;
+			camera->MovementSpeed += 0.01f;
 
 		if (glfwGetKey(mWind, GLFW_KEY_W) == GLFW_PRESS)
 			camera->ProcessKeyboard(FORWARD, deltaTime);
@@ -44,6 +44,7 @@ public:
 
 	bool displayNormals = false;
 	bool blinn = true;
+	bool ultraLighting = false;
 	bool swapMap = false;
 	float visibleCursorY = lastY;
 	float visibleCursorX = lastX;
@@ -112,11 +113,19 @@ private:
 	{
 		if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
 			displayNormals = !displayNormals;
+		if (glfwGetKey(window, GLFW_KEY_SEMICOLON) == GLFW_PRESS)
+			ultraLighting = !ultraLighting;
 		if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
 			blinn = !blinn;
 			std::cout << "Blinn lighting: " << (blinn ? "ON" : "OFF") << std::endl;
 		}
-
+		if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+		{
+			glm::vec3 f = camera->Front;
+			glm::vec3 p = camera->Position;
+			std::cout << "Front: " << f.x << "," << f.y << "," << f.z << std::endl;
+			std::cout << "Position: " << p.x << "," << p.y << "," << p.z << std::endl;
+		}
 		if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)

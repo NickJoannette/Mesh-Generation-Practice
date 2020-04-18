@@ -1,20 +1,38 @@
 #include "Surface.h"
-#include "stb_image.h"
-#include "stbi_image_write.h"
-#include <chrono>
-
-/*
-void visualizeImageWrite() {
-
-}
-
-*/
 
 Surface::Surface(unsigned int w, unsigned int l, bool f)
 {
-	auto start = std::chrono::steady_clock::now();
 
-	std::string path = "../Textures/testHeight.png";
+	auto start = std::chrono::steady_clock::now();
+	unsigned int nWidth = 128;
+	unsigned int nLength = 128;
+	SimplexNoiseGenerator sng(nWidth *nLength);
+	float * noise = new float[nWidth * nLength];
+	sng.SimplexNoise2D(nWidth, nLength, sng.fNoiseSeed1D, 8, 1.35, noise);
+	/*for (int i = 0; i < 128 * 128; i++) {
+		std::cout << noise[i] << std::endl;
+	}*/
+
+
+
+	auto end = std::chrono::steady_clock::now();
+
+	std::cout << "Elapsed time for noise gen: "
+		<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
+
+
+
+
+
+
+
+
+
+
+
+	start = std::chrono::steady_clock::now();
+
+	std::string path = "../Textures/testHeightSmall.png";
 
 	int iWidth, iHeight, channels;
 	unsigned char *image = stbi_load(path.c_str(), &iWidth, &iHeight, &channels, STBI_rgb_alpha);
@@ -44,7 +62,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	
 
 
-	auto end = std::chrono::steady_clock::now();
+	 end = std::chrono::steady_clock::now();
 
 	std::cout << "Elapsed time for HEightmap read : "
 		<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
@@ -57,10 +75,12 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 
 	// MEMBER INITIALIZATIONS
+	 if (w == 1 && l == 1) w = l = 2;
+
 	width = w; length = l; flat = f;
 
 	vertices = new float[w*l*8];
-	HeightMap = new heightMapping[(w + 1)*(l + 1)];
+	HeightMap = new heightMapping[(w*l)];
 	PossibleXValues = new float[length];
 	PossibleZValues = new float[width];
 	float normalizer = width >= length ? width : length;
@@ -72,11 +92,11 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 		// Create the vertices for the grid. The length of the grid is in the z axis, the width in the x axis.
 		int c = 0;
 		for (int j = 0; j < l; j++) {
-			float z = (float) j / l - 0.5f;
+			float z = (float) j / (l-1) - 0.5f;
 			for (int i = 0; i < w; i++) {
-				float x = (float) i / w - 0.5f;
+				float x = (float) i / (w-1) - 0.5f;
 
-				float y = ((float)(*(heightMap + h++))) / 255.0 - 0.5f;
+				float y = ((float)(*(noise + h++)) * 2);
 				//	Position coordinates
 				*(vertices + c++) = x;
 				*(vertices + c++) = y;
@@ -94,7 +114,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 				//heightMapping hm{ x, z, y };
 				//*(HeightMap + h - 1) = hm;
 
-				//SuperMap.insert(std::make_pair(x, zHeightMapping{ z , y }));
+			//	SuperMap.insert(std::make_pair(x, zHeightMapping{ z , y }));
 
 			}
 		}
@@ -163,7 +183,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 			faceNormal = glm::normalize(faceNormal);
 			
-			if (vertices[v1Ind + 6] == -5) {
+			if (vertices[v3Ind + 6] == -5) {
 				vertices[v1Ind + 5] = faceNormal.x;
 				vertices[v1Ind + 6] = faceNormal.y;
 				vertices[v1Ind + 7] = faceNormal.z;
@@ -205,8 +225,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 
 			// Set the normalalized normal coordinates in the vertex array
-			if (vertices[v1Ind + 6] == -5) {
-
+			if (vertices[v3Ind + 6] == -5) {
 				faceNormal = glm::normalize(faceNormal);
 				vertices[v1Ind + 5] = faceNormal.x;
 				vertices[v1Ind + 6] = faceNormal.y;
@@ -365,7 +384,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 	int nic = 0;
 	std::string writePath = "../Textures/TestMap.png";
-
+	/*
 	for (unsigned char *pn = new_image; pn != new_image + img_size; pn += channels) {
 
 		*(pn) = (uint8_t)((*(vertices + nic + 5)*0.5 + 0.5) * 255);
@@ -374,7 +393,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 		nic += 8;
 	}
 	stbi_write_png(writePath.c_str(), width, length, channels, new_image, width*channels);
-
+	*/
 
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);

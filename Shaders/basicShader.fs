@@ -44,6 +44,7 @@ in vec3 fragPosition;
 uniform vec3 fragColor;
 
 uniform bool blinn;
+uniform bool ultraStrengthLighting;
 uniform vec3 clickPoint;
 uniform vec3 viewPosition;
 uniform float time;
@@ -69,8 +70,8 @@ vec3 CalcPointLight (PointLight light, vec3 normal, vec3 viewDir) {
 
 	// Calculate attenuation factor based on distance from the light to this fragment	
 	float fragToLightDistance = length(light.position - fragPosition);
-	float attenuationFactor = (20000.0)/(fragToLightDistance * fragToLightDistance);
-
+	float attenuationFactor = (1.0)/(fragToLightDistance * fragToLightDistance);
+	if (ultraStrengthLighting) attenuationFactor = 25.0/(fragToLightDistance * fragToLightDistance);
 	// Ambient Lighting
 	vec3 ambientLight = light.ambient * vec3(1);
 	
@@ -121,8 +122,8 @@ vec3 CalcFlashLight (FlashLight light, vec3 normal, vec3 viewDir) {
 	vec3 flashLightAmbientLight = abs((abs(flashLight.cutOff)-abs(theta))/(1.0-abs(flashLight.cutOff)))*flashLight.color *.5f;
 	
 	float fragToFlashLightDistance = length (flashLight.position - fragPosition);
-	float flashLightAttenuationFactor = (20000.0)/(fragToFlashLightDistance*fragToFlashLightDistance);
-	
+	float flashLightAttenuationFactor = (1.0)/(fragToFlashLightDistance*fragToFlashLightDistance);
+	if (ultraStrengthLighting) flashLightAttenuationFactor = 25.0/(fragToFlashLightDistance * fragToFlashLightDistance);
 		vec3 specularLight = vec3(0,0,0);
 
 	if (blinn) {
@@ -167,8 +168,8 @@ vec3 CalcFlashLight (FlashLight light, vec3 normal, vec3 viewDir) {
 out vec4 FragColor;
 
 
-float near = 0.1; 
-float far  = 125.0; 
+float near = 0.001; 
+float far  = 2.0; 
   
 float LinearizeDepth(float depth) 
 {
@@ -332,9 +333,9 @@ vec3 color =  vec3(r,g,b);
 	
 	
 	
-	 float depth = LinearizeDepth(gl_FragCoord.z)/125.0f;
+	 float depth = LinearizeDepth(gl_FragCoord.z)/(0.75*far);
 	 
-	FragColor = vec4((combinedResult * vec3(1.0f - 0,1.0f - 0,1.0f - 0)),1);
+	FragColor = vec4((combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth)),1);
 		
 
 	

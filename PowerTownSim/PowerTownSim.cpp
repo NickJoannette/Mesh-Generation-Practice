@@ -33,11 +33,9 @@ float lastFrame = 0.0f;
 
 OpenGLWindow * mainWindow = new OpenGLWindow(SCR_WIDTH, SCR_HEIGHT);
 GLFWwindow * mWind = mainWindow->glWindow();
-Camera camera(mainWindow, glm::vec3(0, 1, 0));
+Camera camera(mainWindow, glm::vec3(0, 0, 0));
 
-glm::vec3 lightSourcePosition = glm::vec3(4.75, 2.5, 4.75);
-
-
+Shader surfaceShader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
 
 int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
 	if (glm::length(clickPoint) < 0.1) return -1;
@@ -67,6 +65,97 @@ int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
 	return 4;
 }
 
+class TerrainGrid {
+
+public:
+
+	struct GridPosition { int x, z; };
+
+	struct GridSquare {
+		GridPosition position;
+		float size;
+	};
+
+
+	TerrainGrid(GridPosition center) {
+
+		gridSquareShader = Shader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
+		cent = center;
+		far = 1.0f;
+		chunks = new Surface(128, 128, true);
+		gridTransform = glm::mat4(1);
+		gridModel = glm::mat4(1);
+		gridModel = glm::scale(gridModel, glm::vec3(1, 0.185, 1));
+
+		Grid = new GridSquare[gridSize];
+		CenterGrid(center);
+	};
+
+	void CenterGrid(GridPosition center) {
+		cent = center;
+		int shiftFromCenter = sqrt(gridSize) / 2;
+		limitX = limitZ = shiftFromCenter;
+		int gridSqNr = 0;
+		for (int x = center.x - shiftFromCenter; x <= center.x + shiftFromCenter; x++) {
+			for (int z = center.z - shiftFromCenter; z <= center.z + shiftFromCenter; z++) {
+				Grid[gridSqNr].size = 1.0f;
+				Grid[gridSqNr].position.x = x;
+				Grid[gridSqNr++].position.z = z;
+			}
+		}
+	}
+
+	void bindGridShader() {
+		gridSquareShader.use();
+		gridSquareShader.setInt("heightTex", 0);
+		gridSquareShader.setInt("material.diffuse", 1);
+		gridSquareShader.setInt("material.specular", 2);
+		gridSquareShader.setFloat("material.shininess", 16);
+		gridSquareShader.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
+		//surfaceShader.setVec3("flashLight.position", rayPosition);
+		//surfaceShader.setVec3("flashLight.direction", rayDirection);
+		gridSquareShader.setVec3("flashLight.color", glm::vec3(1, 1, 1));
+
+		gridSquareShader.setMat4("view", camera.GetViewMatrix());
+		gridSquareShader.setMat4("projection", *camera.GetProjectionMatrix());
+
+		gridSquareShader.setVec3("fragColor", glm::vec3(0.0, 0.0, 0.35));
+		gridSquareShader.setInt("heightMap", 0);
+
+	}
+
+	void UpdateGrid(float x, float z) {
+		float d = sqrt((x - cent.x) * (x - cent.x) + (z - cent.z) * (z - cent.z));
+		if (d > 0.7)CenterGrid(GridPosition{ (int)x,(int)z });
+			//if (limitX - abs((position.x - cent.x)) > 1.0 ||
+		//	limitZ - abs((position.z - cent.z)) > 1.0) CenterGrid(position);
+	}
+
+	void DrawGrid() {
+		bindGridShader();
+
+		// For every grid square in the grid, draw it at its position;
+		for (int i = 0; i < gridSize; i++) {
+			gridTransform = glm::translate(glm::mat4(1), glm::vec3(Grid[i].position.x, -1, Grid[i].position.z));
+			gridSquareShader.setMat4("model", gridModel);
+			gridSquareShader.setMat4("transform", gridTransform);
+			chunks->Draw();
+		}
+	}
+
+	GridPosition cent;
+	const unsigned int gridSize = 25;
+	glm::mat4 gridTransform;
+	glm::mat4 gridModel;
+	float limitX, limitZ, far;
+	Shader gridSquareShader;
+	Surface * chunks;
+	GridSquare * Grid;
+
+private:
+
+
+};
 
 int main() {
 	// Shaders initialization
@@ -74,7 +163,6 @@ int main() {
 	Shader lightSourceShaderProgram("../Shaders/lightSourceShader.vs", "../Shaders/lightSourceShader.fs", "G");
 	Shader cubeShaderProgram("../Shaders/texturedCubeShader.vs", "../Shaders/texturedCubeShader.fs", "G");
 	Shader backgroundShaderProgram("../Shaders/backgroundTextureShader.vs", "../Shaders/backgroundTextureShader.fs", "G");
-	Shader surfaceShader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
 	Shader normalDisplayShader("../Shaders/normalDisplayShader.vs", "../Shaders/normalDisplayShader.gs", "../Shaders/normalDisplayShader.fs", "T");
 
 
@@ -88,11 +176,6 @@ int main() {
 	// Resource managers
 
 
-#pragma region camera instantiation
-
-#pragma endregion
-
-
 	Light_Orb * test1 = new Light_Orb(&lightSourceShaderProgram);
 
 	unsigned int heightMap;
@@ -104,7 +187,6 @@ int main() {
 	unsigned int testMap;
 	Utility::load2DWrappedMipMapTexture("../Textures/testHeight.png", &testMap, false);
 
-#pragma region cube buffer objects
 	unsigned int cubeVBO;
 	unsigned int cubeVAO;
 	unsigned int cubeEBO;
@@ -123,23 +205,8 @@ int main() {
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 	glBindVertexArray(0);
 
-#pragma endregion cube
-
-#pragma region light source vertex array object
-
-	unsigned int lightSourceVAO;
-
-	glGenVertexArrays(1, &lightSourceVAO);
-	glBindVertexArray(lightSourceVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glBindVertexArray(0);
 
 
-
-#pragma endregion
 
 	glm::mat4 lightSourceTransform = glm::mat4(1);
 	cubeShaderProgram.setInt("material.diffuse", 0);
@@ -148,50 +215,47 @@ int main() {
 
 
 
-
-
-
-	Surface surface(1024, 1024, true);
+	/*
+	Surface surface(128, 128, true);
 	glm::mat4 surfaceModel = glm::mat4(1);
-	glm::mat4 surfaceTransform = glm::mat4(1);
-	surfaceModel = glm::scale(surfaceModel, glm::vec3(2500, 500, 2500));
+	glm::mat4 surfaceTransform = glm::translate(glm::mat4(1),glm::vec3(0,-1,0));
+	surfaceModel = glm::scale(surfaceModel, glm::vec3(1, 0.185, 1));
+	*/
 
-	*(test1->getModel()) = glm::scale(*(test1->getModel()), glm::vec3(4));
+	*(test1->getModel()) = glm::scale(*(test1->getModel()), glm::vec3(0.01));
+
+
+
+	TerrainGrid TG(TerrainGrid::GridPosition{ 0,0 });
 
 	while (!glfwWindowShouldClose(mWind))
 	{
 		mainWindow->clearColor(0.0021, 0.016, 0.046, 1.0);
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
+		//std::cout << "FPS: " << (1.0 / deltaTime) << std::endl;
 		lastFrame = currentFrame;
 		float timeValue = glfwGetTime();
 		test1->Update(timeValue);
 
 		glfwPollEvents();
-		//std::cout << "FPS: " << (1.0 / deltaTime) << std::endl;
 		UI_InputManager.processInput(deltaTime);
 
 
-
-
-
-		//TerrainRenderer.render(chunk1);
-
-		// Set the point source uniforms
-		// P 1
+		TG.UpdateGrid(camera.Position.x,camera.Position.z);
+		TG.DrawGrid();
+		
+		/*
 		surfaceShader.use();
 
-
-
 		surfaceShader.setBool("blinn", UI_InputManager.blinn);
-
-		surfaceShader.setVec3("pointLights[1].ambient", 0.2f* test1->lightColor);
-		surfaceShader.setVec3("pointLights[1].diffuse", 1.0f * test1->lightColor); // darken diffuse light a bit
-		surfaceShader.setVec3("pointLights[1].specular", 1.0f * test1->lightColor);
+		surfaceShader.setBool("ultraStrengthLighting", UI_InputManager.ultraLighting);
+		surfaceShader.setVec3("pointLights[1].ambient", 0.1f* test1->lightColor);
+		surfaceShader.setVec3("pointLights[1].specular", 0.60f * test1->lightColor);
 		surfaceShader.setVec3("pointLights[1].diffuse", 0.4f*test1->lightColor); // darken diffuse light a bit
 		surfaceShader.setVec3("pointLights[1].specular", test1->lightColor);
 		surfaceShader.setVec3("pointLights[1].position", test1->getPosition());
-
+	
 
 		surfaceShader.setInt("heightTex", 0);
 		surfaceShader.setInt("material.diffuse", 1);
@@ -216,20 +280,27 @@ int main() {
 		glBindTexture(GL_TEXTURE_2D, earthDiffuseMap);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, testMap);
-		surfaceShader.setMat4("transform", surfaceTransform);
+
+		glm::mat4 st = surfaceTransform;
+	    surfaceShader.setMat4("transform", surfaceTransform);
 		surface.Draw();
+		*/
+		/*
 		if (UI_InputManager.displayNormals) {
 			normalDisplayShader.use();
-		//	normalDisplayShader.setMat4("view", view);
-		//	normalDisplayShader.setMat4("projection", projection);
+			normalDisplayShader.setMat4("view", camera.GetViewMatrix());
+			normalDisplayShader.setMat4("projection", *camera.GetProjectionMatrix());
 			normalDisplayShader.setMat4("model", surfaceModel);
+			normalDisplayShader.setMat4("transform", surfaceTransform);
 			surface.Draw();
 		}
+
 
 		glDisableVertexAttribArray(2);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(0);
 		glBindVertexArray(0);
+		*/
 
 		WOR.Render(*test1);
 

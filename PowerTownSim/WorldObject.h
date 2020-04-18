@@ -19,26 +19,14 @@ friend class WorldObjectRenderer;
 public: 
 	
 
-	WorldObject() : position(new glm::vec3(0,150,0)), 
+	WorldObject() : position(new glm::vec3(0,5,0)), 
 		transform(new glm::mat4(1)), model(new glm::mat4(1)) {
 		*transform = glm::translate(*transform, *position);
 	};
 
 	void Update(float time) {
-		if (position->y > -5) {
-		
-			if (!(lightColor.g < 0 && lightColor.r < 0 && lightColor.b < 0)) {
-				lightColor.g = ((sinf(0.25*time)));
-				lightColor.r = ((sinf(0.25*time)));
-				lightColor.b = ((sinf(0.25*time)));
-			}
-			else lightColor *= 1.0125;
-			position->y -= 0.1f;
-			*transform = glm::translate(*transform, glm::vec3(0, -0.1f, 0.0f));
-		}
-		else lightColor += glm::vec3(0.05, 0.00, 0.0);
-		if (time > 30) lightColor += glm::vec3(-0.001, 0.075, 0.075);
-		}
+		lightColor.g = abs(sinf(time));
+	}
 
 	glm::vec3 * getLightColor() { return &lightColor; }
 	glm::vec3 getPosition() { return *position; }

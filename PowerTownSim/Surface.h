@@ -5,6 +5,10 @@
 #include <map>
 #include "shader.h"
 #include <glew/glew.h>
+#include "stb_image.h"
+#include "stbi_image_write.h"
+#include "SimplexNoiseGenerator.h"
+#include <chrono>
 
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -14,6 +18,7 @@ class Surface
 {
 public:
 
+	Surface() {  };
 	Surface(unsigned int w, unsigned int l, bool f);
 	void Draw();
 	float * findHeight(float xCoord, float zCoord, float xScale, float zScale);

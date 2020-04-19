@@ -109,7 +109,7 @@ public:
 	void SeedChunks() {
 
 		for (int i = 0; i < 1; i++) {
-			chunks[i] = Surface(256, 256, Grid[i].position.x * Grid[i].position.z + 1);
+			chunks[i] = Surface(256, 256, glfwGetTime());//Grid[i].position.x * Grid[i].position.z + 1);
 		}
 	}
 
@@ -163,7 +163,7 @@ public:
 	}
 
 	GridPosition cent;
-	const unsigned int gridSize = 25;
+	const unsigned int gridSize = 49;
 	glm::mat4 gridTransform;
 	glm::mat4 gridModel;
 	float limitX, limitZ, far;

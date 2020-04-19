@@ -219,10 +219,14 @@ void main()
 
 
 float r,g,b;
-b = abs(sin(fragHeight));
-g = 0.3 + fragHeight;
-r = 0.7-cos(0.05*time*fragHeight);
-
+b = 0.2 + fragHeight;
+g = 0.8 + fragHeight;
+r = 0.34 - abs(sin(fragHeight*3));
+if (fragHeight < 0.2){
+g = 0.2;
+b = 0.7 + fragHeight;
+r = 0.0;
+}
 vec3 color =  vec3(r,g,b);
 
 

@@ -10,7 +10,7 @@ Surface::Surface(unsigned int w, unsigned int l, float seed)
 
 	SimplexNoiseGenerator sng(w, l, 1);
 
-	sng.SimplexNoise2D(w, l, sng.fNoiseSeed2D, 9, 2.15, noise);
+	sng.SimplexNoise2D(w, l, sng.fNoiseSeed2D, 7, 1.45, noise);
 	/*for (int i = 0; i < 128 * 128; i++) {
 		std::cout << noise[i] << std::endl;
 	}*/
@@ -472,7 +472,7 @@ void Surface::DrawInstanced()
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 	glEnableVertexAttribArray(3);
-	glDrawElementsInstanced(GL_TRIANGLES, 6 * (width - 1)*(length - 1), GL_UNSIGNED_INT, 0, 25);
+	glDrawElementsInstanced(GL_TRIANGLES, 6 * (width - 1)*(length - 1), GL_UNSIGNED_INT, 0, 49);
 	glDisableVertexAttribArray(3);
 	glDisableVertexAttribArray(2);
 	glDisableVertexAttribArray(1);

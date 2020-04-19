@@ -408,12 +408,12 @@ stbi_write_png(writePath.c_str(), width, length, channels, new_image, width*chan
 
 void Surface::regenHeights(float seed) {
 
-	/*auto start = std::chrono::steady_clock::now();
+	auto start = std::chrono::steady_clock::now();
 	SimplexNoiseGenerator sng(width, length, seed);
 	sng.SimplexNoise2D(width, length, sng.fNoiseSeed2D, 8, 1.35, noise);
 	
-	*/glBindBuffer(GL_ARRAY_BUFFER, heightBO);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, width*length * sizeof(float), noise);
+	//glBindBuffer(GL_ARRAY_BUFFER, heightBO);
+	//glBufferSubData(GL_ARRAY_BUFFER, 0, width*length * sizeof(float), noise);
 
 }
 
@@ -465,14 +465,14 @@ void Surface::Draw()
 	glBindVertexArray(0);
 }
 
-void Surface::DrawInstanced()
+void Surface::DrawInstanced(unsigned int count)
 {
 	glBindVertexArray(vao);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 	glEnableVertexAttribArray(3);
-	glDrawElementsInstanced(GL_TRIANGLES, 6 * (width - 1)*(length - 1), GL_UNSIGNED_INT, 0, 49);
+	glDrawElementsInstanced(GL_TRIANGLES, 6 * (width - 1)*(length - 1), GL_UNSIGNED_INT, 0, count);
 	glDisableVertexAttribArray(3);
 	glDisableVertexAttribArray(2);
 	glDisableVertexAttribArray(1);

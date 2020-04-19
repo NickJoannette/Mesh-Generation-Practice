@@ -16,6 +16,7 @@
 #include "WorldObject.h"
 #include "TextureManager.h"
 #include "Light_Orb.h"
+#include <thread>
 #include <irrKlang/irrKlang.h>
 using namespace irrklang;
 #define STB_IMAGE_IMPLEMENTATION
@@ -103,17 +104,26 @@ public:
 				Grid[gridSqNr++].position.z = z;
 			}
 		}
-
 	}
 
 	void SeedChunks() {
 
 		for (int i = 0; i < 1; i++) {
-			chunks[i] = Surface(256, 256, glfwGetTime());//Grid[i].position.x * Grid[i].position.z + 1);
+			chunks[i] = Surface(128, 128, glfwGetTime());//Grid[i].position.x * Grid[i].position.z + 1);
 		}
 	}
-
+	void doIt() {}
 	void bindGridShader() {
+		
+		// Define a Lambda Expression 
+		auto f = [](Surface * c) {
+			c->regenHeights(3.0f);
+		};
+
+		// This thread is launched by using  
+		// lamda expression as callable 
+		thread th3(f, &chunks[0]);
+		th3.join();
 		gridSquareShader.use();
 		gridSquareShader.setInt("heightTex", 0);
 		gridSquareShader.setInt("material.diffuse", 1);
@@ -150,7 +160,7 @@ public:
 		{
 			gridSquareShader.setVec2(("gridOffset[" + std::to_string(i) + "]"),glm::vec2(Grid[i].position.x,Grid[i].position.z));
 		}
-		chunks[0].DrawInstanced();
+		chunks[0].DrawInstanced(gridSize);
 		// For every grid square in the grid, draw it at its position;
 	//	for (int i = 0; i < gridSize; i++) {
 		//	if (i % 5 == 0)
@@ -163,7 +173,7 @@ public:
 	}
 
 	GridPosition cent;
-	const unsigned int gridSize = 49;
+	const unsigned int gridSize = 25;
 	glm::mat4 gridTransform;
 	glm::mat4 gridModel;
 	float limitX, limitZ, far;

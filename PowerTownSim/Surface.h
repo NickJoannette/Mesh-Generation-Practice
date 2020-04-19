@@ -21,7 +21,7 @@ public:
 	Surface() {  };
 	Surface(unsigned int w, unsigned int l, float seed);
 	void Draw();
-	void DrawInstanced();
+	void DrawInstanced(unsigned int count);
 	float * findHeight(float xCoord, float zCoord, float xScale, float zScale);
 
 	void regenHeights(float seed);

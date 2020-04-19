@@ -14,7 +14,7 @@ uniform mat4 transform;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform vec2 gridOffset[49];
+uniform vec2 gridOffset[25];
 uniform float time;
 uniform sampler2D heightTex;
 uniform vec3 clickPoint;
@@ -79,7 +79,7 @@ void main()
 	
 	vec3 normalizedPMTPos = normalize(PMTPos.xyz);
 	
-	fragHeight = 4*noise*Xnoise(PMTPos3) - 0.6*cos(noise);
+	fragHeight = 4*noise*Xnoise(PMTPos3) - 0.35*cos(noise);
 	
 	float height = fragHeight;
 	gl_Position = projection * view * model * transform * vec4(vec3(aPos.x + gridOffset[gl_InstanceID].x,height,

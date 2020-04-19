@@ -1,14 +1,16 @@
 #include "Surface.h"
 
-Surface::Surface(unsigned int w, unsigned int l, bool f)
+Surface::Surface(unsigned int w, unsigned int l, float seed)
 {
-
+	srand(seed);
+	noise = new float[w * l];
+	std::cout << "Memory allotted for noise : " << (w*l) << std::endl;
 	auto start = std::chrono::steady_clock::now();
-	unsigned int nWidth = 128;
-	unsigned int nLength = 128;
-	SimplexNoiseGenerator sng(nWidth *nLength);
-	float * noise = new float[nWidth * nLength];
-	sng.SimplexNoise2D(nWidth, nLength, sng.fNoiseSeed1D, 8, 1.35, noise);
+
+
+	SimplexNoiseGenerator sng(w, l, 1);
+
+	sng.SimplexNoise2D(w, l, sng.fNoiseSeed2D, 9, 2.15, noise);
 	/*for (int i = 0; i < 128 * 128; i++) {
 		std::cout << noise[i] << std::endl;
 	}*/
@@ -16,7 +18,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 
 	auto end = std::chrono::steady_clock::now();
-
+	/*
 	std::cout << "Elapsed time for noise gen: "
 		<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
 
@@ -54,92 +56,79 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 		*(pn+1) = (uint8_t)(225);
 		*(pn + 2) = *(p + 2);
 		*(pn + 3) = *(p + 3);
-		*/
+
 	}
 
 	stbi_image_free(image);
 
-	
+
 
 
 	 end = std::chrono::steady_clock::now();
 
 	std::cout << "Elapsed time for HEightmap read : "
 		<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
-	
-	
-	
+
+
+
 
 	 start = std::chrono::steady_clock::now();
 
+	 */
 
+	 // MEMBER INITIALIZATIONS
+	if (w == 1 && l == 1) w = l = 2;
 
-	// MEMBER INITIALIZATIONS
-	 if (w == 1 && l == 1) w = l = 2;
+	width = w; length = l;
 
-	width = w; length = l; flat = f;
-
-	vertices = new float[w*l*8];
+	vertices = new float[w*l * 8];
 	HeightMap = new heightMapping[(w*l)];
 	PossibleXValues = new float[length];
 	PossibleZValues = new float[width];
 	float normalizer = width >= length ? width : length;
 	// Algorithm for generating the plane's vertex data
 	int h = 0;
-	if (flat)
-	{
 
-		// Create the vertices for the grid. The length of the grid is in the z axis, the width in the x axis.
-		int c = 0;
-		for (int j = 0; j < l; j++) {
-			float z = (float) j / (l-1) - 0.5f;
-			for (int i = 0; i < w; i++) {
-				float x = (float) i / (w-1) - 0.5f;
+	// Create the vertices for the grid. The length of the grid is in the z axis, the width in the x axis.
+	int c = 0;
+	for (int j = 0; j < l; j++) {
+		float z = (float)j / (l - 1) - 0.5f;
+		for (int i = 0; i < w; i++) {
+			float x = (float)i / (w - 1) - 0.5f;
 
-				float y = ((float)(*(noise + h++)) * 2);
-				//	Position coordinates
-				*(vertices + c++) = x;
-				*(vertices + c++) = y;
-				*(vertices + c++) = z;
-				// Textures coordinates
-				*(vertices + c++) = x + 0.5f;
-				*(vertices + c++) = z + 0.5f;
-				// Normal coordinates
-				*(vertices + c++) = -5;
-				*(vertices + c++) = -5;
-				*(vertices + c++) = -5;
+			float y = 0;
+			//	Position coordinates
+			*(vertices + c++) = x;
+			*(vertices + c++) = y;
+			*(vertices + c++) = z;
+			// Textures coordinates
+			*(vertices + c++) = x + 0.5f;
+			*(vertices + c++) = z + 0.5f;
+			// Normal coordinates
+			*(vertices + c++) = -5;
+			*(vertices + c++) = -5;
+			*(vertices + c++) = -5;
 
+			// Add a height mapping to the height map data structure (SuperMap);
+			//heightMapping hm{ x, z, y };
+			//*(HeightMap + h - 1) = hm;
 
-				// Add a height mapping to the height map data structure (SuperMap);
-				//heightMapping hm{ x, z, y };
-				//*(HeightMap + h - 1) = hm;
+		//	SuperMap.insert(std::make_pair(x, zHeightMapping{ z , y }));
 
-			//	SuperMap.insert(std::make_pair(x, zHeightMapping{ z , y }));
-
-			}
 		}
 
-		// Calculate face normals
-
-		end = std::chrono::steady_clock::now();
-
-		std::cout << "Elapsed time for initial vertex creation : "
-			<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
-
-
-
-		start = std::chrono::steady_clock::now();
-
+	}
+	// Calculate face normals
 
 
 		// Create the indices for the drawElements call / GPU
 
 		// Creat the first pass of triangles
-		
-		indices = new GLuint[6*(w-1)*(l-1)];
-		 c = 0;
-		 int ct = 0;
-		for (int i = 0; i < (w-1)*(l-1); i++, c++){
+
+		indices = new GLuint[6 * (w - 1)*(l - 1)];
+		c = 0;
+		int ct = 0;
+		for (int i = 0; i < (w - 1)*(l - 1); i++, c++) {
 			if ((c + 1) % w == 0) ++c;
 			// To me, this is clockwise... Camera view matrix inversion causing confusion? Not sure... But 
 			// GL says it's CCW
@@ -148,7 +137,7 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 			*(indices + ct++) = c + l;
 			*(indices + ct++) = c + 1;
 			*(indices + ct++) = c;
-	
+
 			// Calculate its normal
 			unsigned int v1Ind = 8 * (c + l);
 			unsigned int v2Ind = 8 * (c + 1);
@@ -161,28 +150,28 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 
 			// Cross product
 			float cx, cy, cz;
-	
-			cx = (v3y-v1y) * (v2z-v1z) - (v3z-v1z) * (v2y-v1y);
-			cy = (v3x-v1x) * (v2z-v1z) - (v3z-v1z) * (v2x-v1x);
-			cz = (v3x-v1x) * (v2y-v1y) - (v3y-v1y) * (v2x-v1x);
+
+			cx = (v3y - v1y) * (v2z - v1z) - (v3z - v1z) * (v2y - v1y);
+			cy = (v3x - v1x) * (v2z - v1z) - (v3z - v1z) * (v2x - v1x);
+			cz = (v3x - v1x) * (v2y - v1y) - (v3y - v1y) * (v2x - v1x);
 
 			float c2x, c2y, c2z;
 
-			c2x = (v1y-v2y) * (v3z-v2z) - (v1z-v2z) * (v3y-v2y);
-			c2y = (v1x-v2x) * (v3z-v2z) - (v1z-v2z) * (v3x-v2x);
-			c2z = (v1x-v2x) * (v3y-v2y) - (v1y-v2y) * (v3x-v2x);
+			c2x = (v1y - v2y) * (v3z - v2z) - (v1z - v2z) * (v3y - v2y);
+			c2y = (v1x - v2x) * (v3z - v2z) - (v1z - v2z) * (v3x - v2x);
+			c2z = (v1x - v2x) * (v3y - v2y) - (v1y - v2y) * (v3x - v2x);
 
 			glm::vec3 vec1(v3x - v2x, v3y - v2y, v3z - v2z);
 			glm::vec3 vec2(v1x - v2x, v1y - v2y, v1z - v2z);
 
-			glm::vec3 faceNormal = glm::cross(vec1,vec2);
+			glm::vec3 faceNormal = glm::cross(vec1, vec2);
 
 
 
 			// Set the normalalized normal coordinates in the vertex array
 
 			faceNormal = glm::normalize(faceNormal);
-			
+
 			if (vertices[v3Ind + 6] == -5) {
 				vertices[v1Ind + 5] = faceNormal.x;
 				vertices[v1Ind + 6] = faceNormal.y;
@@ -200,9 +189,9 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 			*(indices + ct++) = c + w + 1;
 
 			// Calculate its normal
-			v1Ind = 8 *  (c + 1);
+			v1Ind = 8 * (c + 1);
 			v2Ind = 8 * (c + w);
-			v3Ind = 8 * (c+w+1);
+			v3Ind = 8 * (c + w + 1);
 			v1x = vertices[v1Ind], v1y = vertices[v1Ind + 1], v1z = vertices[v1Ind + 2];
 			v2x = vertices[v2Ind], v2y = vertices[v2Ind + 1], v2z = vertices[v2Ind + 2];
 			v3x = vertices[v3Ind], v3y = vertices[v3Ind + 1], v3z = vertices[v3Ind + 2];
@@ -239,129 +228,125 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 			}
 		}
 
-		end = std::chrono::steady_clock::now();
 
-		std::cout << "Elapsed time for initial normal creation : "
-			<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
-
-
-		start = std::chrono::steady_clock::now();
-		
-/*
-		// Now set each vertex normal to the average of the surrounding triangles
-		for (int i = 0; i < (8*w*l)/width; i++) {
-			int ind = i * 8;
-			float nX, nY, nZ;
-			// If it's the first row of vertices
-			if (i < length) {
-
-				if (i == 0) {
-
-					nX = (vertices[ind + 8] + vertices[ind + 8 * width]) / 2.0;
-					nY = (vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 2.0;
-					nZ = (vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 2.0;
-
-				}
-				else {
-
-					nX = (vertices[ind - 8] + vertices[ind + 8] + vertices[ind + 8 * width]) / 3.0;
-					nY = (vertices[ind - 7] + vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 3.0;
-					nZ = (vertices[ind - 6] + vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 3.0;
-
-				}
-
-
-			}
-			else if (i % width == 0) {
-				nX = (vertices[ind - 8*width] + vertices[ind + 8] + vertices[ind + 8 * width]) / 3.0;
-				nY = (vertices[ind - 8*width + 1] + vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 3.0;
-				nZ = (vertices[ind - 8*width + 2] + vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 3.0;
-
-			}
-			else {
-				nX = (vertices[ind - 8 * width] + vertices[ind - 8] +  vertices[ind + 8] + vertices[ind + 8 * width]) / 4.0;
-				nY = (vertices[ind - 8 * width + 1] + vertices[ind - 7] + vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 4.0;
-				nZ = (vertices[ind - 8 * width + 2] + vertices[ind - 6] + vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 4.0;
-			}
-
-			vertices[ind + 5] = nX;
-			vertices[ind + 6] = nY;
-			vertices[ind + 7] = nZ;
-
-		//	std::cout << "Averaged normal : (" << nX << "," << nY << "," << nZ << ")" << std::endl;
-
-		}
-	*/
-
-		
-		end = std::chrono::steady_clock::now();
-
-		std::cout << "Elapsed time for averaged normal creation : "
-			<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
-
-	}
 		/*
+				// Now set each vertex normal to the average of the surrounding triangles
+				for (int i = 0; i < (8*w*l)/width; i++) {
+					int ind = i * 8;
+					float nX, nY, nZ;
+					// If it's the first row of vertices
+					if (i < length) {
+
+						if (i == 0) {
+
+							nX = (vertices[ind + 8] + vertices[ind + 8 * width]) / 2.0;
+							nY = (vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 2.0;
+							nZ = (vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 2.0;
+
+						}
+						else {
+
+							nX = (vertices[ind - 8] + vertices[ind + 8] + vertices[ind + 8 * width]) / 3.0;
+							nY = (vertices[ind - 7] + vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 3.0;
+							nZ = (vertices[ind - 6] + vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 3.0;
+
+						}
 
 
-		for (int j = 0; j <= width; j++) {
+					}
+					else if (i % width == 0) {
+						nX = (vertices[ind - 8*width] + vertices[ind + 8] + vertices[ind + 8 * width]) / 3.0;
+						nY = (vertices[ind - 8*width + 1] + vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 3.0;
+						nZ = (vertices[ind - 8*width + 2] + vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 3.0;
 
-			for (int i = 0; i <= length; i++) {
-				float x = (float)i / normalizer - 0.5f;
-				float height = .0f;// ((float)(*(heightMap + h++))) / 255.0 - 0.5f;
-				float z = (float)j / normalizer - 0.5f;
+					}
+					else {
+						nX = (vertices[ind - 8 * width] + vertices[ind - 8] +  vertices[ind + 8] + vertices[ind + 8 * width]) / 4.0;
+						nY = (vertices[ind - 8 * width + 1] + vertices[ind - 7] + vertices[ind + 9] + vertices[ind + 8 * width + 1]) / 4.0;
+						nZ = (vertices[ind - 8 * width + 2] + vertices[ind - 6] + vertices[ind + 10] + vertices[ind + 8 * width + 2]) / 4.0;
+					}
 
-				if (height < lowestLow) lowestLow = height;
-				if (height > highestHigh) highestHigh = height;
+					vertices[ind + 5] = nX;
+					vertices[ind + 6] = nY;
+					vertices[ind + 7] = nZ;
 
-				vertices.push_back(x);
-				vertices.push_back(height);
-				vertices.push_back(z);
+				//	std::cout << "Averaged normal : (" << nX << "," << nY << "," << nZ << ")" << std::endl;
 
-				// Texture coordinates
-				vertices.push_back((((float)i) / normalizer) - 0.5f);
-				vertices.push_back((((float)j) / normalizer) - 0.5f);
+				}
+			*/
 
-
-				// Normal coordinates
-				float nX = 0.5 + height;
-				float nY = 1.0 - abs(cosf(height));
-				float nZ = 0.5  + height;
-				vertices.push_back(nX);
-				vertices.push_back(nY);
-				vertices.push_back(nZ);
+	/*
 
 
+	for (int j = 0; j <= width; j++) {
+
+		for (int i = 0; i <= length; i++) {
+			float x = (float)i / normalizer - 0.5f;
+			float height = .0f;// ((float)(*(heightMap + h++))) / 255.0 - 0.5f;
+			float z = (float)j / normalizer - 0.5f;
+
+			if (height < lowestLow) lowestLow = height;
+			if (height > highestHigh) highestHigh = height;
+
+			vertices.push_back(x);
+			vertices.push_back(height);
+			vertices.push_back(z);
+
+			// Texture coordinates
+			vertices.push_back((((float)i) / normalizer) - 0.5f);
+			vertices.push_back((((float)j) / normalizer) - 0.5f);
+
+
+			// Normal coordinates
+			float nX = 0.5 + height;
+			float nY = 1.0 - abs(cosf(height));
+			float nZ = 0.5  + height;
+			vertices.push_back(nX);
+			vertices.push_back(nY);
+			vertices.push_back(nZ);
 
 
 
 
 
-				heightMapping hm{ x, z, height };
-				*(HeightMap + h - 1) = hm;
 
-				SuperMap.insert(std::make_pair(x, zHeightMapping{ z,height }));
 
-				//s	std::cout << "Added Height Map w/ Height: " << HeightMap[h - 1].height << std::endl;
-			}
+			heightMapping hm{ x, z, height };
+			*(HeightMap + h - 1) = hm;
+
+			SuperMap.insert(std::make_pair(x, zHeightMapping{ z,height }));
+
+			//s	std::cout << "Added Height Map w/ Height: " << HeightMap[h - 1].height << std::endl;
 		}
 	}
-	else
-	{
-		srand(3);
-		for (int j = 0; j <= width; j++)
-			for (int i = 0; i <= length; ++i)
-			{
-				float rnd = rand() % 100 + 1;
-				vertices.push_back((float)i / normalizer);
-				vertices.push_back((float)j / normalizer);
-				vertices.push_back((float)(rand() % 8) / 5 /normalizer);
-				vertices.push_back((((float)i / normalizer) + 1.0) / 2.0);
-				vertices.push_back((((float)j / normalizer) + 1.0) / 2.0);
-			}
-	}
+}
+else
+{
+	srand(3);
+	for (int j = 0; j <= width; j++)
+		for (int i = 0; i <= length; ++i)
+		{
+			float rnd = rand() % 100 + 1;
+			vertices.push_back((float)i / normalizer);
+			vertices.push_back((float)j / normalizer);
+			vertices.push_back((float)(rand() % 8) / 5 /normalizer);
+			vertices.push_back((((float)i / normalizer) + 1.0) / 2.0);
+			vertices.push_back((((float)j / normalizer) + 1.0) / 2.0);
+		}
+}
 
-	*/
-	/*for (int i = 0; i < length; i++)
+*/
+/*for (int i = 0; i < length; i++)
+{
+	indices.push_back(i + length + 1);
+	indices.push_back(i + length + 2);
+	indices.push_back(i + 1);
+	indices.push_back(i + 1);
+	indices.push_back(i);
+	indices.push_back(i + length + 1);
+}
+for (int k = 1; k < width; k++) // Generate indices (valid for GL_TRIANGLES draw mode) // To review - generates 1 extra set of indices
+	for (int i = k * length + k; i < (k + 1)*length + k; i++)
 	{
 		indices.push_back(i + length + 1);
 		indices.push_back(i + length + 2);
@@ -370,45 +355,44 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 		indices.push_back(i);
 		indices.push_back(i + length + 1);
 	}
-	for (int k = 1; k < width; k++) // Generate indices (valid for GL_TRIANGLES draw mode) // To review - generates 1 extra set of indices 
-		for (int i = k * length + k; i < (k + 1)*length + k; i++)
-		{
-			indices.push_back(i + length + 1);
-			indices.push_back(i + length + 2);
-			indices.push_back(i + 1);
-			indices.push_back(i + 1);
-			indices.push_back(i);
-			indices.push_back(i + length + 1);
-		}
-		*/
-
-	int nic = 0;
-	std::string writePath = "../Textures/TestMap.png";
-	/*
-	for (unsigned char *pn = new_image; pn != new_image + img_size; pn += channels) {
-
-		*(pn) = (uint8_t)((*(vertices + nic + 5)*0.5 + 0.5) * 255);
-		*(pn + 1) = (uint8_t)((*(vertices + nic + 6)*0.5 + 0.5) * 255);
-		*(pn + 2) = (uint8_t)((*(vertices + nic + 7)*0.5 + 0.5) * 255);
-		nic += 8;
-	}
-	stbi_write_png(writePath.c_str(), width, length, channels, new_image, width*channels);
 	*/
+
+	/*
+	int nic = 0;
+std::string writePath = "../Textures/TestMap.png";
+
+for (unsigned char *pn = new_image; pn != new_image + img_size; pn += channels) {
+
+	*(pn) = (uint8_t)((*(vertices + nic + 5)*0.5 + 0.5) * 255);
+	*(pn + 1) = (uint8_t)((*(vertices + nic + 6)*0.5 + 0.5) * 255);
+	*(pn + 2) = (uint8_t)((*(vertices + nic + 7)*0.5 + 0.5) * 255);
+	nic += 8;
+}
+stbi_write_png(writePath.c_str(), width, length, channels, new_image, width*channels);
+*/
 
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
 	glGenBuffers(1, &ebo);
+	glGenBuffers(1, &heightBO);
+	
 	glBindVertexArray(vao);
+
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, w*l*8* sizeof(float), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, w*l * 8 * sizeof(float), vertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 
+	glBindBuffer(GL_ARRAY_BUFFER, heightBO);
+	glBufferData(GL_ARRAY_BUFFER, w*l*sizeof(float), noise, GL_STATIC_DRAW);
+	glVertexAttribPointer(3 , 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6*(w-1)*(l-1) * sizeof(GLuint), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * (w - 1)*(l - 1) * sizeof(GLuint), indices, GL_STATIC_DRAW);
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
 
@@ -419,6 +403,17 @@ Surface::Surface(unsigned int w, unsigned int l, bool f)
 	delete[6 * (w - 1)*(l - 1)] indices;
 
 	setPossibleValues();
+
+}
+
+void Surface::regenHeights(float seed) {
+
+	/*auto start = std::chrono::steady_clock::now();
+	SimplexNoiseGenerator sng(width, length, seed);
+	sng.SimplexNoise2D(width, length, sng.fNoiseSeed2D, 8, 1.35, noise);
+	
+	*/glBindBuffer(GL_ARRAY_BUFFER, heightBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, width*length * sizeof(float), noise);
 
 }
 
@@ -440,10 +435,10 @@ float Surface::mapToGridZ(float zCoord) {
 
 float * Surface::findHeight(float xCoord, float zCoord, float xScale, float zScale) {
 
-	
-	float normalizedXCoord = mapToGridX(xCoord/xScale);
-	float normalizedZCoord = mapToGridZ(zCoord/zScale);
-	
+
+	float normalizedXCoord = mapToGridX(xCoord / xScale);
+	float normalizedZCoord = mapToGridZ(zCoord / zScale);
+
 	auto r = SuperMap.equal_range(normalizedXCoord);
 
 	for (auto begin = r.first; begin != r.second; begin++) if (begin->second.z == normalizedZCoord) {
@@ -461,12 +456,31 @@ void Surface::Draw()
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
-	glDrawElements(GL_TRIANGLES, 6*(width-1)*(length-1), GL_UNSIGNED_INT, 0);
+	glEnableVertexAttribArray(3);
+	glDrawElements(GL_TRIANGLES, 6 * (width - 1)*(length - 1), GL_UNSIGNED_INT, 0);
+	glDisableVertexAttribArray(3);
 	glDisableVertexAttribArray(2);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(0);
 	glBindVertexArray(0);
 }
+
+void Surface::DrawInstanced()
+{
+	glBindVertexArray(vao);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
+	glDrawElementsInstanced(GL_TRIANGLES, 6 * (width - 1)*(length - 1), GL_UNSIGNED_INT, 0, 25);
+	glDisableVertexAttribArray(3);
+	glDisableVertexAttribArray(2);
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(0);
+	glBindVertexArray(0);
+}
+
+
 Surface::~Surface()
 {
 }

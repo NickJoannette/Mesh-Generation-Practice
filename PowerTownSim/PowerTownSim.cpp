@@ -82,13 +82,13 @@ public:
 		gridSquareShader = Shader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
 		cent = center;
 		far = 1.0f;
-		chunks = new Surface(128, 128, true);
 		gridTransform = glm::mat4(1);
 		gridModel = glm::mat4(1);
-		gridModel = glm::scale(gridModel, glm::vec3(1, 0.185, 1));
+		gridModel = glm::scale(gridModel, glm::vec3(1, 0.25, 1));
 
 		Grid = new GridSquare[gridSize];
 		CenterGrid(center);
+		SeedChunks();
 	};
 
 	void CenterGrid(GridPosition center) {
@@ -103,6 +103,14 @@ public:
 				Grid[gridSqNr++].position.z = z;
 			}
 		}
+
+	}
+
+	void SeedChunks() {
+
+		for (int i = 0; i < 1; i++) {
+			chunks[i] = Surface(256, 256, Grid[i].position.x * Grid[i].position.z + 1);
+		}
 	}
 
 	void bindGridShader() {
@@ -115,6 +123,7 @@ public:
 		//surfaceShader.setVec3("flashLight.position", rayPosition);
 		//surfaceShader.setVec3("flashLight.direction", rayDirection);
 		gridSquareShader.setVec3("flashLight.color", glm::vec3(1, 1, 1));
+		gridSquareShader.setFloat("time", glfwGetTime());
 
 		gridSquareShader.setMat4("view", camera.GetViewMatrix());
 		gridSquareShader.setMat4("projection", *camera.GetProjectionMatrix());
@@ -124,23 +133,33 @@ public:
 
 	}
 
-	void UpdateGrid(float x, float z) {
+	void UpdateGrid() {
+		float x = camera.Position.x, z = camera.Position.z;
 		float d = sqrt((x - cent.x) * (x - cent.x) + (z - cent.z) * (z - cent.z));
-		if (d > 0.7)CenterGrid(GridPosition{ (int)x,(int)z });
+		if (d > 1)CenterGrid(GridPosition{ (int)x,(int)z });
 			//if (limitX - abs((position.x - cent.x)) > 1.0 ||
 		//	limitZ - abs((position.z - cent.z)) > 1.0) CenterGrid(position);
 	}
 
 	void DrawGrid() {
 		bindGridShader();
-
-		// For every grid square in the grid, draw it at its position;
-		for (int i = 0; i < gridSize; i++) {
-			gridTransform = glm::translate(glm::mat4(1), glm::vec3(Grid[i].position.x, -1, Grid[i].position.z));
-			gridSquareShader.setMat4("model", gridModel);
-			gridSquareShader.setMat4("transform", gridTransform);
-			chunks->Draw();
+	
+		gridSquareShader.setMat4("model", gridModel);
+		gridSquareShader.setMat4("transform", gridTransform);
+		for (unsigned int i = 0; i < gridSize; i++)
+		{
+			gridSquareShader.setVec2(("gridOffset[" + std::to_string(i) + "]"),glm::vec2(Grid[i].position.x,Grid[i].position.z));
 		}
+		chunks[0].DrawInstanced();
+		// For every grid square in the grid, draw it at its position;
+	//	for (int i = 0; i < gridSize; i++) {
+		//	if (i % 5 == 0)
+			//chunks[i].regenHeights(i);
+		//	gridTransform = glm::translate(glm::mat4(1), glm::vec3(Grid[i].position.x, -1, Grid[i].position.z));
+			//gridSquareShader.setMat4("model", gridModel);
+			//gridSquareShader.setMat4("transform", gridTransform);
+			//chunks[0].Draw();
+		//}
 	}
 
 	GridPosition cent;
@@ -149,9 +168,8 @@ public:
 	glm::mat4 gridModel;
 	float limitX, limitZ, far;
 	Shader gridSquareShader;
-	Surface * chunks;
+	Surface chunks [1];
 	GridSquare * Grid;
-
 private:
 
 
@@ -228,23 +246,26 @@ int main() {
 
 	TerrainGrid TG(TerrainGrid::GridPosition{ 0,0 });
 
+	float cFrame;
+	float time;
 	while (!glfwWindowShouldClose(mWind))
 	{
-		mainWindow->clearColor(0.0021, 0.016, 0.046, 1.0);
-		float currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
+		mainWindow->clearColor(0.0021, 0.015, 0.03, 1.0);
+		cFrame = glfwGetTime();
+		deltaTime = cFrame - lastFrame;
 		//std::cout << "FPS: " << (1.0 / deltaTime) << std::endl;
-		lastFrame = currentFrame;
-		float timeValue = glfwGetTime();
-		test1->Update(timeValue);
+		lastFrame = cFrame;
+		time = glfwGetTime();
+	//	test1->Update(timeValue);
 
 		glfwPollEvents();
 		UI_InputManager.processInput(deltaTime);
 
-
-		TG.UpdateGrid(camera.Position.x,camera.Position.z);
+		TG.UpdateGrid();
 		TG.DrawGrid();
-		
+		WOR.Render(*test1);
+		UI_Renderer.render();
+		glfwSwapBuffers(mWind);
 		/*
 		surfaceShader.use();
 
@@ -302,11 +323,7 @@ int main() {
 		glBindVertexArray(0);
 		*/
 
-		WOR.Render(*test1);
 
-		UI_Renderer.render();
-
-		glfwSwapBuffers(mWind);
 
 	}
 

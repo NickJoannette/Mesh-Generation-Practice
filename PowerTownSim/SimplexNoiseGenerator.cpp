@@ -1,7 +1,8 @@
 #include "SimplexNoiseGenerator.h"
 
 
-SimplexNoiseGenerator::SimplexNoiseGenerator(unsigned int nOutputSize) {
+SimplexNoiseGenerator::SimplexNoiseGenerator(unsigned int nOutputSize, int seed) {
+	srand(seed);
 	this->nOutputSize = nOutputSize;
 	fNoiseSeed1D = new float[nOutputSize];
 	fPerlinNoise1D = new float[nOutputSize];
@@ -9,7 +10,8 @@ SimplexNoiseGenerator::SimplexNoiseGenerator(unsigned int nOutputSize) {
 }
 
 
-SimplexNoiseGenerator::SimplexNoiseGenerator(unsigned int nOutputWidth, unsigned int nOutputLength) {
+SimplexNoiseGenerator::SimplexNoiseGenerator(unsigned int nOutputWidth, unsigned int nOutputLength, int seed) {
+	srand(seed);
 	this->nOutputWidth = nOutputWidth;
 	this->nOutputLength = nOutputLength;
 	fNoiseSeed2D = new float[nOutputWidth*nOutputLength];
@@ -37,6 +39,7 @@ void SimplexNoiseGenerator::SimplexNoise1D(int nCount, float *fSeed, int nOctave
 }
 
 void SimplexNoiseGenerator::SimplexNoise2D(unsigned int nWidth, unsigned int nLength, float *fSeed, int nOctaves, float fBias, float *fOutput) {
+	int c = 0;
 	for (int x = 0; x < nWidth; x++) {
 		for (int y = 0; y < nLength; y++) {
 			float fScale = 1.0f;
@@ -61,7 +64,12 @@ void SimplexNoiseGenerator::SimplexNoise2D(unsigned int nWidth, unsigned int nLe
 				scaleAccum += fScale;
 				fScale /= fBias;
 			}
-			fOutput[y * nWidth + x] = fNoise / scaleAccum;
+			float out = fNoise / scaleAccum;
+			if (x == nWidth - 1) out = fOutput[y * nWidth ];
+			if (y == nLength - 1) out = fOutput[x ];
+			fOutput[y * nWidth + x] = out;
+			++c;
 		}
 	}
+	std::cout << "Num of stored in noise: " << c << std::endl;
 }

@@ -155,29 +155,48 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="FixedFunctionRenderer.cpp" />
-    <ClCompile Include="SimpleGridOfSquares.cpp" />
+    <ClCompile Include="BasicVertexGenerators.cpp" />
+    <ClCompile Include="InfiniteTerrainHandler.cpp" />
+    <ClCompile Include="Light_Orb.cpp" />
+    <ClCompile Include="MyMesh.cpp" />
+    <ClCompile Include="PerlinNoiseGenerator.cpp" />
+    <ClCompile Include="SimplexNoiseGenerator.cpp" />
     <ClCompile Include="Surface.cpp" />
-    <ClCompile Include="TerrainRenderer.cpp" />
-    <ClCompile Include="MasterRenderer.cpp" />
     <ClCompile Include="OpenGLWindow.cpp" />
     <ClCompile Include="PowerTownSim.cpp" />
+    <ClCompile Include="TerrainGenerator.cpp" />
+    <ClCompile Include="TextureManager.cpp" />
+    <ClCompile Include="UI_Cursor_Element.cpp" />
+    <ClCompile Include="UI_Element.cpp" />
+    <ClCompile Include="UI_InputManager.cpp" />
+    <ClCompile Include="UI_Renderer.cpp" />
+    <ClCompile Include="WorldObject.cpp" />
+    <ClCompile Include="WorldObjectRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BasicVertexGenerators.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="FixedFunctionRenderer.h" />
+    <ClInclude Include="InfiniteTerrainHandler.h" />
+    <ClInclude Include="Light_Orb.h" />
     <ClInclude Include="Model.h" />
-    <ClInclude Include="Rendering.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MyMesh.h" />
+    <ClInclude Include="PerlinNoiseGenerator.h" />
+    <ClInclude Include="ResourceUtility.h" />
     <ClInclude Include="Shader.h" />
-    <ClInclude Include="SimpleGridOfSquares.h" />
+    <ClInclude Include="SimplexNoiseGenerator.h" />
     <ClInclude Include="stbi_image_write.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Surface.h" />
-    <ClInclude Include="TerrainRenderer.h" />
-    <ClInclude Include="MasterRenderer.h" />
     <ClInclude Include="OpenGLWindow.h" />
+    <ClInclude Include="TerrainGenerator.h" />
+    <ClInclude Include="TextureManager.h" />
+    <ClInclude Include="UI_Cursor_Element.h" />
+    <ClInclude Include="UI_Element.h" />
+    <ClInclude Include="UI_InputManager.h" />
+    <ClInclude Include="UI_Renderer.h" />
+    <ClInclude Include="WorldObject.h" />
+    <ClInclude Include="WorldObjectRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

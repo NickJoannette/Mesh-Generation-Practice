@@ -3,7 +3,7 @@
 namespace SimpleShapes {
 
 	SphereData genSphere(unsigned int sectorCount, unsigned int stackCount, float radius) {
-		float * vertices = new float[(stackCount+1) * (sectorCount+1) * 5]; // just verts n texes right now
+		float * vertices = new float[(stackCount+1) * (sectorCount+1) * 8]; // just verts n texes right now
 		float PI = 3.14159;
 
 		float x, y, z, xy;                              // vertex position
@@ -78,7 +78,7 @@ namespace SimpleShapes {
 			}
 		}
 
-		return SphereData{&vertices[0], &indices[0], v, c};
+		return SphereData{vertices, indices, v, c};
 
 	}
 

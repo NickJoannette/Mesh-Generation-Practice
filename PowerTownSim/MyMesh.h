@@ -44,7 +44,7 @@ private:
 
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, numVertices * 5 * sizeof(float), vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, numVertices * 8 * sizeof(float), &vertices[0], GL_STATIC_DRAW);
 
 		if (numIndices != NULL && indices != NULL) {
 			glGenBuffers(1, &EBO);

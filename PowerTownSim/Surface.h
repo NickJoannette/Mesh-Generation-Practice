@@ -19,10 +19,12 @@ class Surface
 public:
 
 	Surface() {  };
-	Surface(unsigned int w, unsigned int l, bool f);
+	Surface(unsigned int w, unsigned int l, float seed);
 	void Draw();
+	void DrawInstanced();
 	float * findHeight(float xCoord, float zCoord, float xScale, float zScale);
 
+	void regenHeights(float seed);
 	~Surface();
 
 	float lowestLow = 9999999, highestHigh = -99999999;
@@ -38,6 +40,7 @@ private:
 	unsigned int ebo;
 	unsigned int vbo;
 	unsigned int vao;
+	unsigned int heightBO;
 
 	struct zHeightMapping { float z, height; };
 	std::multimap<float, zHeightMapping> SuperMap;
@@ -49,7 +52,7 @@ private:
 	float * PossibleZValues;
 
 	float * vertices;
-	
+	float * noise;
 	GLuint * indices;
 
 	// Geometric variables

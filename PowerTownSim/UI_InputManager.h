@@ -125,6 +125,15 @@ private:
 			glm::vec3 p = camera->Position;
 			std::cout << "Front: " << f.x << "," << f.y << "," << f.z << std::endl;
 			std::cout << "Position: " << p.x << "," << p.y << "," << p.z << std::endl;
+
+			glm::mat4 view = *camera->GetProjectionMatrix() *  camera->GetViewMatrix();
+			glm::vec3 c1, c2, c3, c4;
+			c1 = view[0]; c2 = view[1]; c3 = view[2];  c4 = view[3];
+			std::cout << "CV1: " << c1.x << "," << c1.y << "," << c1.z << std::endl;
+			std::cout << "CV2: " << c2.x << "," << c2.y << "," << c2.z << std::endl;
+			std::cout << "CV3: " << c3.x << "," << c3.y << "," << c3.z << std::endl;
+			std::cout << "CV4: " << c4.x << "," << c4.y << "," << c4.z << std::endl;
+
 		}
 		if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

@@ -169,7 +169,7 @@ out vec4 FragColor;
 
 
 float near = 0.001; 
-float far  = 2.0; 
+float far  = 1.50; 
   
 float LinearizeDepth(float depth) 
 {
@@ -219,9 +219,9 @@ void main()
 
 
 float r,g,b;
-b = 0.5 - fragHeight;
-g = 0.5 + fragHeight;
-r = 0.045;//abs(sin(0.5*time));
+b = abs(sin(fragHeight));
+g = 0.3 + fragHeight;
+r = 0.7-cos(0.05*time*fragHeight);
 
 vec3 color =  vec3(r,g,b);
 
@@ -333,9 +333,9 @@ vec3 color =  vec3(r,g,b);
 	
 	
 	
-	 float depth = LinearizeDepth(gl_FragCoord.z)/(0.75*far);
+	 float depth = LinearizeDepth(gl_FragCoord.z)/(far);
 	 
-	FragColor = vec4((combinedResult * vec3(1.0f - depth,1.0f - depth,1.0f - depth)),1);
+	FragColor = vec4((combinedResult * vec3(1.0f - 0,1.0f - 0,1.0f - 0)),1);
 		
 
 	

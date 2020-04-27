@@ -241,22 +241,22 @@ vec3 color =  vec3(r,g,b);
 // Define static direction light source for now
 	DirLight dirLight;
 	dirLight.direction = vec3(cos(time),-1,0);
-	dirLight.ambient = vec3(0.5,0.5,0.5);
-	dirLight.diffuse = vec3(1,1,1);
+	dirLight.ambient = vec3(0.25,0.25,0.25);
+	dirLight.diffuse = vec3(0.2,0.2,0.2);
 	dirLight.specular = vec3(0.15,0.15,0.15);
 	vec3 normal = norm;
 	vec3 viewDir = normalize(viewPosition - fragPosition);
 	
-	
+	vec3 lightingResult = vec3(0,0,0);
 	//phase 1: directional light
-    vec3 lightingResult = CalcDirLight(dirLight, normal, viewDir);
+    lightingResult += CalcDirLight(dirLight, normal, viewDir);
     // phase 2: point lights
 
     // phase 3: spot light
      lightingResult += CalcFlashLight(flashLight, normal, viewDir);   
 	
 	vec3 pointResult = vec3(0,0,0);
-	    for(int i = 1; i < NR_POINT_LIGHTS; i++)
+	    for(int i = 0; i < NR_POINT_LIGHTS; i++)
         pointResult += CalcPointLight(pointLights[i],normal, viewDir);    
 
 	

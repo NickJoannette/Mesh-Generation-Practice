@@ -55,6 +55,7 @@ public:
 	float visibleCursorY = lastY;
 	float visibleCursorX = lastX;
 	const float SCR_WIDTH = 1440.0, SCR_HEIGHT = 900.0;
+	bool teleSound = false;
 
 private:
 
@@ -215,6 +216,7 @@ private:
 
 		if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 			SoundEngine->play2D("../Audio/shot12.wav", false);
+			teleSound = true;
 		}
 
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {

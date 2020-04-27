@@ -6,6 +6,7 @@
 #include "Shader.h" 
 #include "GridTile.h"
 #include "Camera.h"
+#include "UI_InputManager.h"
 
 /*
 
@@ -47,8 +48,9 @@ public:
 	};
 
 
-	TerrainGrid(GridPosition center, Camera * cam) {
-		cWidth = cLength = 64;
+	TerrainGrid(GridPosition center, Camera * cam, UI_InputManager * UIM) {
+		this->UIM = UIM;
+		cWidth = cLength = 128;
 		camera = cam;
 		gridSquareShader = Shader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
 		cent = center;
@@ -70,8 +72,6 @@ public:
 
 		//for (int i = 0; i < gridSize; ++i) std::cout << Grid[i].xBound.min << " , " << Grid[i].xBound.max << std::endl;
 		GridSquare * GS = findGridSquareContaining(x, z);
-		std::cout << "Inside Grid Square With Bounds: X: (" << GS->xBound.min << ", " << GS->xBound.max << ") | Z: (" << GS->zBound.min << ", " << GS->zBound.max << ")"
-			<< std::endl;
 		return gridTile.getHash(x - GS->position.x, z - GS->position.z);
 	}
 
@@ -98,6 +98,7 @@ public:
 		gridTile = GridTile(cWidth, cLength, glfwGetTime());
 	}
 
+	glm::vec3 terrainLightPos = glm::vec3(0.0f, 1.0f, 0.0f);
 	void bindGridShader() {
 
 		// Define a Lambda Expression 
@@ -115,18 +116,23 @@ public:
 		gridSquareShader.setInt("material.specular", 2);
 		gridSquareShader.setFloat("material.shininess", 16);
 		gridSquareShader.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
+		gridSquareShader.setVec3("pointLights[0].position",terrainLightPos);
+		glm::vec3 pointColor = glm::vec3(1, abs(sinf(glfwGetTime()*0.1)), 0);
+		gridSquareShader.setVec3("pointLights[0].ambient",pointColor);
+		gridSquareShader.setVec3("pointLights[0].diffuse",pointColor);
+		gridSquareShader.setVec3("pointLights[0].specular",pointColor);
+
 		//surfaceShader.setVec3("flashLight.position", rayPosition);
 		//surfaceShader.setVec3("flashLight.direction", rayDirection);
 		gridSquareShader.setVec3("flashLight.color", glm::vec3(1, 1, 1));
 		gridSquareShader.setFloat("time", glfwGetTime());
+		gridSquareShader.setBool("blinn", UIM->blinn);
 
 		gridSquareShader.setMat4("view", camera->GetViewMatrix());
 		gridSquareShader.setMat4("projection", *camera->GetProjectionMatrix());
 
 		gridSquareShader.setVec3("fragColor", glm::vec3(0.0, 0.0, 0.35));
 		gridSquareShader.setInt("heightMap", 0);
-
-
 	}
 
 	void UpdateGrid() {
@@ -166,7 +172,8 @@ private:
 	glm::mat4 gridModel;
 	GridPosition cent;
 	float tileScale = 1.0f;
-	const unsigned int gridSize = 25;
+	const unsigned int gridSize = 9;
 	glm::mat4 gridTransform;
+	UI_InputManager * UIM;
 
 };

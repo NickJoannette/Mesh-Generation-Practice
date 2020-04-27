@@ -28,7 +28,7 @@ public:
 	void regenHeights(float seed);
 	~GridTile();
 
-	float getHash(float x, float z) {
+	float  getHash(float x, float z) {
 		unsigned int column = (x + 0.5)*(width - 1.0);//(in.x - (-0.5f)) / unitWidth;
 		unsigned int row = (z + 0.5)*(width - 1.0);//(in.z - (-0.5f)) / unitWidth;
 
@@ -59,7 +59,6 @@ public:
 		float f00 = noise[topLeft], f10 = noise[topRight], f01 = noise[bottomLeft], f11 = noise[bottomRight];
 
 		float bilinearlyInterpolatedNoise = f00 * (1.0 - x)*(1.0 - z) + f10 * x*(1.0 - z) + f01 * (1.0 - x)*z + f11 * x*z;
-		//std::cout << std::endl << "Bilinearly Interpolated Noise: " << bilinearlyInterpolatedNoise << std::endl;
 
 		return bilinearlyInterpolatedNoise;//(row*(width)+column);
 	}

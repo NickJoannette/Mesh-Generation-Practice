@@ -43,8 +43,11 @@ Shader surfaceShader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "
 
 int main() {
 
+	// Input managers
+	UI_InputManager UI_InputManager(mWind, &camera, SoundEngine);
+
 	//Instantiate our terrain manager
-	InfiniteTerrainManager ITM(&camera);
+	InfiniteTerrainManager ITM(&camera, &UI_InputManager);
 	ITM.generatePrimaryTerrainGrid();
 
 	// Shaders initialization
@@ -54,9 +57,6 @@ int main() {
 	Shader backgroundShaderProgram("../Shaders/backgroundTextureShader.vs", "../Shaders/backgroundTextureShader.fs", "G");
 	Shader normalDisplayShader("../Shaders/normalDisplayShader.vs", "../Shaders/normalDisplayShader.gs", "../Shaders/normalDisplayShader.fs", "T");
 
-
-	// Input managers
-	UI_InputManager UI_InputManager(mWind, &camera, SoundEngine);
 
 	// Renderers
 	UI_Renderer UI_Renderer(&UI_InputManager);
@@ -75,13 +75,13 @@ int main() {
 	cubeShaderProgram.setInt("material.specular", 1);
 	cubeShaderProgram.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
 
-
 	float cFrame;
 	float time;
 	irrklang::ISoundSource * src = SoundEngine->addSoundSourceFromFile("../Audio/waves2.wav");
-	irrklang::ISoundSource * src2 = SoundEngine->addSoundSourceFromFile("../Audio/propeller.wav");
+	irrklang::ISoundSource * src2 = SoundEngine->addSoundSourceFromFile("../Audio/flyOn.wav");
+	irrklang::ISoundSource * src3 = SoundEngine->addSoundSourceFromFile("../Audio/flyOff.wav");
 
-	SoundEngine->play2D(src, true);
+//	SoundEngine->play2D(src, true);
 
 		auto f = [](TerrainGrid * TG, int time) {
 		
@@ -96,10 +96,9 @@ int main() {
 		ITM.TG->UpdateGrid();
 
 		int frames = 0;
-		bool flying = false;
-	while (!glfwWindowShouldClose(mWind))
+		bool flyOn = false;
+		while (!glfwWindowShouldClose(mWind))
 	{
-
 		frames++;
 		mainWindow->clearColor(0,0,0.02, 1.0);
 		cFrame = glfwGetTime();
@@ -114,20 +113,21 @@ int main() {
 		ITM.TG->UpdateGrid();
 		ITM.TG->DrawGrid();
 		UI_Renderer.render();
-
-
 		//std::cout << "Height below camera: " << ITM.TG->getHeightAt(camera.Position.x, camera.Position.z);
+		if (UI_InputManager.teleSound) {
+			UI_InputManager.teleSound = false;
+			ITM.TG->terrainLightPos = camera.Position;
+		}
 		if (UI_InputManager.lockCameraToTerrain) {
-			flying = false;
-			SoundEngine->stopAllSoundsOfSoundSource(src2);
+			if (flyOn) SoundEngine->play2D(src3, false);
+			flyOn = false;
 			camera.Position.y = ITM.TG->getHeightAt(camera.Position.x, camera.Position.z) + 0.05;
 		}
 		else {
-			if (!flying) SoundEngine->play2D(src2, true);
-			flying = true;
+			if (!flyOn) SoundEngine->play2D(src2, false);
+			flyOn = true;
 		}
 		glfwSwapBuffers(mWind);
-
 	}
 
 	// Properly clean/Delete all of GLFW's resources that were allocated

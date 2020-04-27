@@ -100,6 +100,90 @@ glm::vec3 lanternSourcePosition = cubePos + glm::vec3(-0.5, -0.5, -1.5);
 
 
 /*
+int rotateModelTowardsVector(glm::vec2 clickPoint, glm::mat4 & model) {
+	if (glm::length(clickPoint) < 0.1) return -1;
+
+	glm::vec2 origin(glm::normalize(glm::vec2(-model[2].x, model[2].z)));
+	clickPoint = glm::normalize(clickPoint);
+
+	float pointingX = origin.x;
+	float pointingZ = origin.y;
+
+	float directionX = clickPoint.x;
+	float directionZ = clickPoint.y;
+
+	float xAdjustment = directionX - pointingX;
+	float zAdjustment = directionZ - pointingZ;
+
+	pointingX += xAdjustment;
+	pointingZ += zAdjustment;
+
+	model[2].x += -(pointingX - origin.x) / 100.0;
+	model[0].z += (pointingX - origin.x) / 100.0;
+	model[2].z += (pointingZ - origin.y) / 100.0;
+	model[0].x += (pointingZ - origin.y) / 100.0;
+	//model[2] = glm::normalize(cubeModel[2]);
+	//model[0] = glm::normalize(cubeModel[0]);
+
+	return 4;
+}
+
+/*
+		surfaceShader.use();
+
+		surfaceShader.setBool("blinn", UI_InputManager.blinn);
+		surfaceShader.setBool("ultraStrengthLighting", UI_InputManager.ultraLighting);
+		surfaceShader.setVec3("pointLights[1].ambient", 0.1f* test1->lightColor);
+		surfaceShader.setVec3("pointLights[1].specular", 0.60f * test1->lightColor);
+		surfaceShader.setVec3("pointLights[1].diffuse", 0.4f*test1->lightColor); // darken diffuse light a bit
+		surfaceShader.setVec3("pointLights[1].specular", test1->lightColor);
+		surfaceShader.setVec3("pointLights[1].position", test1->getPosition());
+
+
+		surfaceShader.setInt("heightTex", 0);
+		surfaceShader.setInt("material.diffuse", 1);
+		surfaceShader.setInt("material.specular", 2);
+		surfaceShader.setFloat("material.shininess", 16);
+		surfaceShader.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
+		//surfaceShader.setVec3("flashLight.position", rayPosition);
+		//surfaceShader.setVec3("flashLight.direction", rayDirection);
+		surfaceShader.setVec3("flashLight.color",glm::vec3(1,1,1));
+
+		surfaceShader.setMat4("view", camera.GetViewMatrix());
+		surfaceShader.setMat4("projection", *camera.GetProjectionMatrix());
+		surfaceShader.setMat4("transform", surfaceTransform);
+		surfaceShader.setMat4("model", surfaceModel);
+		surfaceShader.setVec3("fragColor", glm::vec3(0.0, 0.0, 0.35));
+		surfaceShader.setInt("heightMap", 0);
+		surfaceShader.setFloat("time", timeValue);
+		//surfaceShader.setVec3("travelDir", glm::normalize(destination - cubePos));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, heightMap);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, earthDiffuseMap);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, testMap);
+
+		glm::mat4 st = surfaceTransform;
+		surfaceShader.setMat4("transform", surfaceTransform);
+		surface.Draw();
+		*/
+		/*
+		if (UI_InputManager.displayNormals) {
+			normalDisplayShader.use();
+			normalDisplayShader.setMat4("view", camera.GetViewMatrix());
+			normalDisplayShader.setMat4("projection", *camera.GetProjectionMatrix());
+			normalDisplayShader.setMat4("model", surfaceModel);
+			normalDisplayShader.setMat4("transform", surfaceTransform);
+			surface.Draw();
+		}
+
+
+		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(0);
+		glBindVertexArray(0);
+		*/
 
 
 		/*

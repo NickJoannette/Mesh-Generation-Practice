@@ -38,7 +38,7 @@ void SimplexNoiseGenerator::SimplexNoise1D(int nCount, float *fSeed, int nOctave
 	}
 }
 
-void SimplexNoiseGenerator::SimplexNoise2D(unsigned int nWidth, unsigned int nLength, float *fSeed, int nOctaves, float fBias, float *fOutput) {
+void SimplexNoiseGenerator::SimplexNoise2D(unsigned int nWidth, unsigned int nLength, int nOctaves, float fBias, float *fOutput) {
 	int c = 0;
 	for (int x = 0; x < nWidth; x++) {
 		for (int y = 0; y < nLength; y++) {
@@ -56,9 +56,8 @@ void SimplexNoiseGenerator::SimplexNoise2D(unsigned int nWidth, unsigned int nLe
 				float fBlendX = (float)(x - nSampX1) / (float)nPitch;
 				float fBlendY = (float)(y - nSampY1) / (float)nPitch;
 
-				float fSampleT = (1.0f - fBlendX) * fSeed[nSampY1 * nWidth + nSampX1] + fBlendX * fSeed[nSampY1 * nWidth + nSampX2];
-				float fSampleB = (1.0f - fBlendX) * fSeed[nSampY2 * nWidth + nSampX1] + fBlendX * fSeed[nSampY2 * nWidth + nSampX2];
-
+				float fSampleT = (1.0f - fBlendX) * fNoiseSeed2D[nSampY1 * nWidth + nSampX1] + fBlendX * fNoiseSeed2D[nSampY1 * nWidth + nSampX2];
+				float fSampleB = (1.0f - fBlendX) * fNoiseSeed2D[nSampY2 * nWidth + nSampX1] + fBlendX * fNoiseSeed2D[nSampY2 * nWidth + nSampX2];
 
 				fNoise += (fBlendY * (fSampleB - fSampleT) + fSampleT) * fScale;
 				scaleAccum += fScale;
@@ -66,7 +65,7 @@ void SimplexNoiseGenerator::SimplexNoise2D(unsigned int nWidth, unsigned int nLe
 			}
 			float out = fNoise / scaleAccum;
 			if (x == nWidth - 1) out = fOutput[y * nWidth ];
-			if (y == nLength - 1) out = fOutput[x ];
+	     	if (y == nLength - 1) out = fOutput[x ];
 			fOutput[y * nWidth + x] = out;
 			++c;
 		}

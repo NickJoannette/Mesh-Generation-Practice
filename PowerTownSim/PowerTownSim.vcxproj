@@ -156,15 +156,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BasicVertexGenerators.cpp" />
-    <ClCompile Include="InfiniteTerrainHandler.cpp" />
+    <ClCompile Include="HashTable.cpp" />
+    <ClCompile Include="InfiniteTerrainManager.cpp" />
     <ClCompile Include="Light_Orb.cpp" />
     <ClCompile Include="MyMesh.cpp" />
+    <ClCompile Include="NoiseManager.cpp" />
     <ClCompile Include="PerlinNoiseGenerator.cpp" />
     <ClCompile Include="SimplexNoiseGenerator.cpp" />
-    <ClCompile Include="Surface.cpp" />
+    <ClCompile Include="GridTile.cpp" />
     <ClCompile Include="OpenGLWindow.cpp" />
     <ClCompile Include="PowerTownSim.cpp" />
     <ClCompile Include="TerrainGenerator.cpp" />
+    <ClCompile Include="TerrainGrid.cpp" />
     <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="UI_Cursor_Element.cpp" />
     <ClCompile Include="UI_Element.cpp" />
@@ -176,20 +179,23 @@
   <ItemGroup>
     <ClInclude Include="BasicVertexGenerators.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="InfiniteTerrainHandler.h" />
+    <ClInclude Include="HashTable.h" />
+    <ClInclude Include="InfiniteTerrainManager.h" />
     <ClInclude Include="Light_Orb.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MyMesh.h" />
+    <ClInclude Include="NoiseManager.h" />
     <ClInclude Include="PerlinNoiseGenerator.h" />
     <ClInclude Include="ResourceUtility.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SimplexNoiseGenerator.h" />
     <ClInclude Include="stbi_image_write.h" />
     <ClInclude Include="stb_image.h" />
-    <ClInclude Include="Surface.h" />
+    <ClInclude Include="GridTile.h" />
     <ClInclude Include="OpenGLWindow.h" />
     <ClInclude Include="TerrainGenerator.h" />
+    <ClInclude Include="TerrainGrid.h" />
     <ClInclude Include="TextureManager.h" />
     <ClInclude Include="UI_Cursor_Element.h" />
     <ClInclude Include="UI_Element.h" />

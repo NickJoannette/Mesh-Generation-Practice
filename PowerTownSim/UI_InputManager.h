@@ -3,16 +3,21 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "OpenGLWindow.h"
 #include "Camera.h"
+#include <irrKlang/irrKlang.h>
+using namespace irrklang;
+
 class UI_InputManager
 {
 
 
 public:
-	
-	UI_InputManager(GLFWwindow * mWind, Camera * camera) {
+	ISoundEngine * SoundEngine;
+
+	UI_InputManager(GLFWwindow * mWind, Camera * camera, ISoundEngine * SE) {
 		this->projection = camera->GetProjectionMatrix();
 		this->mWind = mWind;
 		this->camera = camera;
+		SoundEngine = SE;
 		registerCallbacks();
 	};
 
@@ -202,6 +207,10 @@ private:
 
 	void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	{
+
+		if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+			SoundEngine->play2D("../Audio/shot12.wav", false);
+		}
 
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 			glm::vec3 camPos = camera->Position;

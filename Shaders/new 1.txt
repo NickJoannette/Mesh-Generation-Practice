@@ -1,0 +1,1 @@
+Variable length codes combined with hashing for collision detection

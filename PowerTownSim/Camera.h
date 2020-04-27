@@ -78,7 +78,7 @@ public:
 	glm::mat4 * GetProjectionMatrix() {	return &projection;}
 
 	void UpdateProjection() { 
-		projection = glm::perspective(glm::radians(Zoom), mainWindow->getAspectRatio(), 0.001f, 3.0f);
+		projection = glm::perspective(glm::radians(Zoom), mainWindow->getAspectRatio(), 0.001f, 50.0f);
 	}
 
 		// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)

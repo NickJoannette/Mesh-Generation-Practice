@@ -21,14 +21,34 @@ public:
 
 	struct GridPosition { int x, z; };
 
-	struct GridSquare {
+	class OneDimensionalBound{
+	public:
+		OneDimensionalBound() {};
+		OneDimensionalBound(float min, float max) : min(min), max(max) {};
+		bool withinBounds(float coord) {
+			if (coord >= min && coord < max) return true;
+			return false;
+		}
+
+		float min, max;
+	};
+
+
+	class GridSquare {
+	public:
+		bool contains(float x, float z) {
+			if (xBound.withinBounds(x) && zBound.withinBounds(z)) return true;
+			return false;
+		}
+
+		OneDimensionalBound xBound, zBound;
 		GridPosition position;
 		float size;
 	};
 
 
 	TerrainGrid(GridPosition center, Camera * cam) {
-		cWidth = cLength = 512;
+		cWidth = cLength = 64;
 		camera = cam;
 		gridSquareShader = Shader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
 		cent = center;
@@ -41,8 +61,18 @@ public:
 		SeedGridTiles();
 	};
 
+	GridSquare * findGridSquareContaining(float x, float z) {
+		for (int i = 0; i < gridSize; ++i) if (Grid[i].contains(x, z)) return &Grid[i];
+		return nullptr;
+	}
+
 	float getHeightAt(float x, float z) {
-		return gridTile.getHash(x, z);
+
+		//for (int i = 0; i < gridSize; ++i) std::cout << Grid[i].xBound.min << " , " << Grid[i].xBound.max << std::endl;
+		GridSquare * GS = findGridSquareContaining(x, z);
+		std::cout << "Inside Grid Square With Bounds: X: (" << GS->xBound.min << ", " << GS->xBound.max << ") | Z: (" << GS->zBound.min << ", " << GS->zBound.max << ")"
+			<< std::endl;
+		return gridTile.getHash(x - GS->position.x, z - GS->position.z);
 	}
 
 	void CenterGrid(GridPosition center) {
@@ -52,9 +82,13 @@ public:
 		int gridSqNr = 0;
 		for (int x = center.x - shiftFromCenter; x <= center.x + shiftFromCenter; x++) {
 			for (int z = center.z - shiftFromCenter; z <= center.z + shiftFromCenter; z++) {
-				Grid[gridSqNr].size = 4.0f;
+				Grid[gridSqNr].size = 1.0f;
 				Grid[gridSqNr].position.x = x;
-				Grid[gridSqNr++].position.z = z;
+				Grid[gridSqNr].xBound.min = x - 0.5;
+				Grid[gridSqNr].xBound.max = x + 0.5;
+				Grid[gridSqNr].position.z = z;
+				Grid[gridSqNr].zBound.min = z - 0.5;
+				Grid[gridSqNr++].zBound.max = z + 0.5;
 			}
 		}
 	}
@@ -103,6 +137,8 @@ public:
 		//limitZ - abs((position.z - cent.z)) > 1.0) CenterGrid(position);
 	}
 
+	void regen(int seed) { gridTile.regenHeights(seed); }
+
 	void DrawGrid() {
 		bindGridShader();
 		gridSquareShader.setMat4("model", gridModel);
@@ -113,7 +149,7 @@ public:
 
 	void bufferTile(short i) {
 		glBindBuffer(GL_ARRAY_BUFFER, gridTile.heightBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, cWidth*cLength * sizeof(float), TileHash.at(i));
+		glBufferSubData(GL_ARRAY_BUFFER, 0, cWidth*cLength * sizeof(float), gridTile.noise);
 	}
 
 
@@ -130,7 +166,7 @@ private:
 	glm::mat4 gridModel;
 	GridPosition cent;
 	float tileScale = 1.0f;
-	const unsigned int gridSize = 1;
+	const unsigned int gridSize = 25;
 	glm::mat4 gridTransform;
 
 };

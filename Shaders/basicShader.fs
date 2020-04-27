@@ -169,7 +169,7 @@ out vec4 FragColor;
 
 
 float near = 0.001; 
-float far  = 3.00; 
+float far  = 3.0; 
   
 float LinearizeDepth(float depth) 
 {
@@ -224,11 +224,11 @@ g = fragHeight;
 r = 0;
 
 if (fragHeight > 0.125) {
-b = 1.34*(fragHeight - 0.125);
-r = 1.12*(fragHeight-0.125);
+b = 1.0-fragHeight*0.9;
+r = 0.4*(fragHeight-0.125);
 
 }
-if (fragHeight <=0.05){
+if (fragHeight < 0.1){
 g = 0.00;
 b = abs(fragHeight);
 r = 0;
@@ -240,7 +240,7 @@ vec3 color =  vec3(r,g,b);
 
 // Define static direction light source for now
 	DirLight dirLight;
-	dirLight.direction = vec3(1,-1,0);
+	dirLight.direction = vec3(cos(time),-1,0);
 	dirLight.ambient = vec3(0.5,0.5,0.5);
 	dirLight.diffuse = vec3(1,1,1);
 	dirLight.specular = vec3(0.15,0.15,0.15);
@@ -343,7 +343,7 @@ vec3 color =  vec3(r,g,b);
 	
 	
 	
-	 float depth = LinearizeDepth(gl_FragCoord.z)/(far);
+	 float depth = LinearizeDepth(gl_FragCoord.z)/(0.24*far);
 	 
 	FragColor = vec4((combinedResult * vec3(1.0f - 0,1.0f - 0,1.0f - 0)),1);
 		

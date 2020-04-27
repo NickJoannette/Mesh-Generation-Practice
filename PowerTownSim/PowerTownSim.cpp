@@ -82,26 +82,50 @@ int main() {
 	irrklang::ISoundSource * src2 = SoundEngine->addSoundSourceFromFile("../Audio/propeller.wav");
 
 	SoundEngine->play2D(src, true);
+
+		auto f = [](TerrainGrid * TG, int time) {
+		
+			TG->regen(time);
+		};
+
+		// This thread is launched by using  
+		// lamda expression as callable 
+		//thread th3(f, &GridTiles[0]);
+		//th3.join();
+		std::thread * th3; 
+		ITM.TG->UpdateGrid();
+
+		int frames = 0;
+		bool flying = false;
 	while (!glfwWindowShouldClose(mWind))
 	{
 
-		mainWindow->clearColor(0,0.174,0.41, 1.0);
+		frames++;
+		mainWindow->clearColor(0,0,0.02, 1.0);
 		cFrame = glfwGetTime();
 		deltaTime = cFrame - lastFrame;
 		//std::cout << "FPS: " << (1.0 / deltaTime) << std::endl; 
 		lastFrame = cFrame;
 		time = glfwGetTime();
-
+		
 		glfwPollEvents();
 		UI_InputManager.processInput(deltaTime);
 
-		//ITM.TG->UpdateGrid();
+		ITM.TG->UpdateGrid();
 		ITM.TG->DrawGrid();
 		UI_Renderer.render();
 
 
 		//std::cout << "Height below camera: " << ITM.TG->getHeightAt(camera.Position.x, camera.Position.z);
-		camera.Position.y = ITM.TG->getHeightAt(camera.Position.x, camera.Position.z) + 0.02;
+		if (UI_InputManager.lockCameraToTerrain) {
+			flying = false;
+			SoundEngine->stopAllSoundsOfSoundSource(src2);
+			camera.Position.y = ITM.TG->getHeightAt(camera.Position.x, camera.Position.z) + 0.05;
+		}
+		else {
+			if (!flying) SoundEngine->play2D(src2, true);
+			flying = true;
+		}
 		glfwSwapBuffers(mWind);
 
 	}

@@ -98,7 +98,7 @@ GridTile::GridTile(unsigned int w, unsigned int l, float seed)
 	}
 
 	NoiseManager NM(w, l, seed);
-	NM.GenerateSimplexTerrainNoiseFor(noise, vertices);
+	NM.GenerateSimplexTerrainNoiseFor(noise);
 	//for (int i = 0; i < w*l; i++) noise[i] = 0;
 	// Calculate face normals
 
@@ -393,10 +393,8 @@ GridTile::GridTile(unsigned int w, unsigned int l, float seed)
 
 void GridTile::regenHeights(float seed) {
 
-
-
-	//glBindBuffer(GL_ARRAY_BUFFER, heightBO);
-	//glBufferSubData(GL_ARRAY_BUFFER, 0, width*length * sizeof(float), noise);
+	NoiseManager NM(width, length, seed);
+	NM.GenerateSimplexTerrainNoiseFor(noise);
 
 }
 

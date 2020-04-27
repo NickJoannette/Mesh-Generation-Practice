@@ -7,7 +7,7 @@ class NoiseManager
 public:
 
 	NoiseManager(unsigned int width, unsigned int length, int seed);
-	void GenerateSimplexTerrainNoiseFor(float * arrayToFill, float * vertices);
+	void GenerateSimplexTerrainNoiseFor(float * arrayToFill);
 
 
 private:

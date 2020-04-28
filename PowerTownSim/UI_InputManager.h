@@ -135,7 +135,7 @@ private:
 			controlledLightSource = glm::vec3(0, 1, 1);
 		}
 		if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
-			controlledLightSource = glm::vec3(1,0, 1);
+			controlledLightSource = glm::vec3(1,0.1, 0.1);
 		}
 		if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS) {
 			controlledLightSource = glm::vec3(0, 0, 1);
@@ -228,7 +228,7 @@ private:
 	{
 
 		if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-			SoundEngine->play2D("../Audio/shot12.wav", false);
+			SoundEngine->play2D("../Audio/shieldSpell.wav", false);
 			teleSound = true;
 		}
 

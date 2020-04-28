@@ -177,15 +177,6 @@ float LinearizeDepth(float depth)
     return (2.0 * near * far) / (far + near - z * (far - near));	
 }
 
-
-
-
-
-
-
-
-
-
 int getQuadrant(vec3 position, vec3 origin) {
 
 	float x = position.x;

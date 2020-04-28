@@ -18,7 +18,7 @@ uniform vec2 gridOffset[25];
 uniform float time;
 uniform sampler2D heightTex;
 uniform vec3 clickPoint;
-
+uniform vec2 gridOff;
 			float rand(float n){return fract(sin(n) * 43758.5453123);}
 float rand(vec2 n) { 
 	return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
@@ -116,23 +116,23 @@ void main()
 	ivec2 textureSize2D = textureSize(heightTex,0);
 	ivec2 tc = ivec2(texCoord.x  , texCoord.y );
 	
-	vec4 PMTPos =  model * transform * vec4(vec3(aPos.x + gridOffset[gl_InstanceID].x,noise,
-	aPos.z + gridOffset[gl_InstanceID].y), 1.0);
+	vec4 PMTPos =  model * transform * vec4(vec3(aPos.x + gridOff.x,noise,
+	aPos.z + gridOff.y), 1.0);
 	
 	PMTPos3 = PMTPos.xyz;
 	
 	vec3 normalizedPMTPos = normalize(PMTPos.xyz);
 	
-	fragHeight = 4*noise  *cnoise(vec2(PMTPos.x,PMTPos.z));//- 0.01*cos(noise);
+	fragHeight = noise;//4*noise  *cnoise(vec2(PMTPos.x,PMTPos.z));//- 0.01*cos(noise);
 	float height = fragHeight;
 		//if (fragHeight < 0.2)  fragHeight += 0.1*sin(time*0.5);
 
-	gl_Position = projection * view * model * transform * vec4(vec3(aPos.x + gridOffset[gl_InstanceID].x,height,
-	aPos.z + gridOffset[gl_InstanceID].y), 1.0);
+	gl_Position = projection * view * model * transform * vec4(vec3(aPos.x + gridOff.x,height,
+	aPos.z + gridOff.y), 1.0);
 		
 
 	norm = aNormal;
-	fragPosition = vec3(  model  * vec4(vec3(aPos.x + gridOffset[gl_InstanceID].x,height,
-	aPos.z + gridOffset[gl_InstanceID].y), 1.0));
+	fragPosition = vec3(  model  * vec4(vec3(aPos.x + gridOff.x,height,
+	aPos.z + gridOff.y), 1.0));
 
 }

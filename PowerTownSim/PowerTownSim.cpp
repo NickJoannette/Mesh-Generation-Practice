@@ -79,8 +79,10 @@ int main() {
 //	irrklang::ISoundSource * src = SoundEngine->addSoundSourceFromFile("../Audio/waves2.wav");
 	irrklang::ISoundSource * src2 = SoundEngine->addSoundSourceFromFile("../Audio/flyOn.wav");
 	irrklang::ISoundSource * src3 = SoundEngine->addSoundSourceFromFile("../Audio/flyOff.wav");
+	irrklang::ISoundSource * flyFireLoop = SoundEngine->addSoundSourceFromFile("../Audio/flyFireLoop.wav");
+	irrklang::ISoundSource * againstDemonsTheme = SoundEngine->addSoundSourceFromFile("../Audio/againstDemonsTheme.mp3");
 
-//	SoundEngine->play2D(src, true);
+	SoundEngine->play2D(againstDemonsTheme, true);
 
 		auto f = [](TerrainGrid * TG, int time) {
 		
@@ -99,7 +101,7 @@ int main() {
 		while (!glfwWindowShouldClose(mWind))
 	{
 		frames++;
-		mainWindow->clearColor(0,0,0.02, 1.0);
+		mainWindow->clearColor(0,0.025,0.07, 1.0);
 		cFrame = glfwGetTime();
 		deltaTime = cFrame - lastFrame;
 		//std::cout << "FPS: " << (1.0 / deltaTime) << std::endl; 
@@ -109,7 +111,7 @@ int main() {
 		glfwPollEvents();
 		UI_InputManager.processInput(deltaTime);
 
-		ITM.TG->UpdateGrid();
+		//ITM.TG->UpdateGrid();
 		ITM.TG->DrawGrid();
 		UI_Renderer.render();
 		//std::cout << "Height below camera: " << ITM.TG->getHeightAt(camera.Position.x, camera.Position.z);
@@ -117,13 +119,21 @@ int main() {
 			UI_InputManager.teleSound = false;
 			ITM.TG->terrainLightPos = camera.Position;
 		}
+
 		if (UI_InputManager.lockCameraToTerrain) {
-			if (flyOn) SoundEngine->play2D(src3, false);
+			if (flyOn) {
+				SoundEngine->play2D(src3, false);
+				SoundEngine->stopAllSoundsOfSoundSource(flyFireLoop);
+
+			}
 			flyOn = false;
 			camera.Position.y = ITM.TG->getHeightAt(camera.Position.x, camera.Position.z) + 0.05;
 		}
 		else {
-			if (!flyOn) SoundEngine->play2D(src2, false);
+			if (!flyOn) {
+				SoundEngine->play2D(flyFireLoop, true);
+				SoundEngine->play2D(src2, false);
+			}
 			flyOn = true;
 		}
 		glfwSwapBuffers(mWind);

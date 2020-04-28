@@ -51,7 +51,7 @@ public:
 
 	TerrainGrid(GridPosition center, Camera * cam, UI_InputManager * UIM) {
 		this->UIM = UIM;
-		cWidth = cLength = 256;
+		cWidth = cLength = 128;
 		camera = cam;
 		gridSquareShader = Shader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
 		normalDisplayShader = Shader("../Shaders/normalDisplayShader.vs", "../Shaders/normalDisplayShader.gs", "../Shaders/normalDisplayShader.fs", "T");
@@ -73,20 +73,53 @@ public:
 	void initializeNoiseGrid() {
 
 
-		auto f = [](float * noiseArray, GridTile * GT) {
+		auto f = [](float * noiseArray, GridTile * GT, NoiseManager * NM, GridSquare * GS) {
 
 			auto start = std::chrono::steady_clock::now();
-
-			
-
-			for (int i = 0; i < 256 * 256; ++i) noiseArray[i] = GT->noise[i] * 2.04;
+			glm::vec2 v(GS->position.x,GS->position.z);
+			for (int i = 0; i < 128 * 128; ++i) noiseArray[i] = GT->noise[i];
 			auto end = std::chrono::steady_clock::now();
 			std::cout << "Elapsed time for thread : "
 				<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
 
 		};
 
-		for (int i = 0; i < gridSize; ++i) noiseWorkerThreads[i] = std::thread(f, noiseArrays[i], &gridTile);
+		for (int i = 0; i < gridSize; ++i) noiseWorkerThreads[i] = std::thread(f, noiseArrays[i], &gridTile,
+			NM, &Grid[i]);
+	}
+
+	float getHash(float x, float z, unsigned int tileIndex) {
+		unsigned int column = (x + 0.5)*(cWidth - 1.0);//(in.x - (-0.5f)) / unitWidth;
+		unsigned int row = (z + 0.5)*(cWidth - 1.0);//(in.z - (-0.5f)) / unitWidth;
+
+		// Always gives us the top left of vertex of the quad we're in.
+		unsigned int hashIndex = row * cWidth + column;
+
+		// So, the other four vertices of the quad will be at hashIndex + 1, hashIndex + gridWidth, and hashIndex + gridWidth + 1
+		unsigned int topLeft = hashIndex;
+		unsigned int topRight = hashIndex + 1;
+		unsigned int bottomLeft = hashIndex + cWidth;
+		unsigned int bottomRight = bottomLeft + 1;
+
+		float topLeftX = gridTile.vertices[8 * topLeft], topLeftZ = gridTile.vertices[8 * topLeft + 2];
+		float topRightX = gridTile.vertices[8 * topRight], topRightZ = gridTile.vertices[8 * topRight + 2];
+		float bottomLeftX = gridTile.vertices[8 * bottomLeft], bottomLeftZ = gridTile.vertices[8 * bottomLeft + 2];
+		float bottomRightX = gridTile.vertices[8 * bottomRight], bottomRightZ = gridTile.vertices[8 * bottomRight + 2];
+
+		// Remap our x and y such that the boundaries of the quad are the coordinate space limits in 0 to 1
+		float totalX = topRightX - topLeftX;
+		float totalZ = bottomLeftZ - topRightZ;
+		x = (x - topLeftX) / totalX;
+		z = (z - topLeftZ) / totalZ;
+
+		float f00 = noiseArrays[tileIndex][topLeft], 
+			f10 = noiseArrays[tileIndex][topRight], 
+			f01 = noiseArrays[tileIndex][bottomLeft], 
+			f11 = noiseArrays[tileIndex][bottomRight];
+
+		float bilinearlyInterpolatedNoise = f00 * (1.0 - x)*(1.0 - z) + f10 * x*(1.0 - z) + f01 * (1.0 - x)*z + f11 * x*z;
+
+		return bilinearlyInterpolatedNoise;//(row*(width)+column);
 	}
 
 	unsigned int findGridSquareContaining(float x, float z) {
@@ -97,9 +130,8 @@ public:
 	float getHeightAt(float x, float z) {
 		unsigned int ind = findGridSquareContaining(x, z);
 		GridSquare * GS = &Grid[ind];
-		std::cout << "Ratio: " << (noiseArrays[0][4] / gridTile.noise[4]) << std::endl;
 
-		return 4*NM->PNG->noise(glm::vec2(x,z))*gridTile.getHash(x - GS->position.x, z - GS->position.z);
+		return getHash(x - GS->position.x, z - GS->position.z, ind);/* 4*NM->PNG->noise(glm::vec2(x,z))**/
 	}
 
 	void CenterGrid(GridPosition center) {
@@ -167,8 +199,15 @@ public:
 		bindGridShader();
 		gridSquareShader.setMat4("model", gridModel);
 		gridSquareShader.setMat4("transform", gridTransform);
-		for (unsigned int i = 0; i < gridSize; i++)	gridSquareShader.setVec2(("gridOffset[" + std::to_string(i) + "]"), glm::vec2(Grid[i].position.x, Grid[i].position.z));
-		gridTile.DrawInstanced(gridSize);
+		//for (unsigned int i = 0; i < gridSize; i++)	gridSquareShader.setVec2(("gridOffset[" + std::to_string(i) + "]"), glm::vec2(Grid[i].position.x, Grid[i].position.z));
+		for (unsigned int i = 0; i < gridSize; i++) {
+			bufferTile(i);
+			gridSquareShader.setVec2("gridOff", glm::vec2(Grid[i].position.x, Grid[i].position.z));
+			gridTile.Draw();
+		}
+		//gridTile.DrawInstanced(gridSize);
+		
+		
 		if (UIM->displayNormals) {
 			normalDisplayShader.use();
 			normalDisplayShader.setMat4("view", camera->GetViewMatrix());
@@ -181,7 +220,7 @@ public:
 
 	void bufferTile(short i) {
 		glBindBuffer(GL_ARRAY_BUFFER, gridTile.heightBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, cWidth*cLength * sizeof(float), gridTile.noise);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, cWidth*cLength * sizeof(float), noiseArrays[i]/*gridTile.noise*/);
 	}
 
 
@@ -203,7 +242,7 @@ private:
 	glm::mat4 gridModel;
 	GridPosition cent;
 	float tileScale = 1.0f;
-	const unsigned int gridSize = 9;
+	const unsigned int gridSize = 25;
 	glm::mat4 gridTransform;
 	UI_InputManager * UIM;
 

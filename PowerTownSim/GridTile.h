@@ -28,17 +28,14 @@ public:
 	void regenHeights(float seed);
 	~GridTile();
 
-	float  getHash(float x, float z) {
+	float getHash(float x, float z) {
 		unsigned int column = (x + 0.5)*(width - 1.0);//(in.x - (-0.5f)) / unitWidth;
 		unsigned int row = (z + 0.5)*(width - 1.0);//(in.z - (-0.5f)) / unitWidth;
-
 
 		// Always gives us the top left of vertex of the quad we're in.
 		unsigned int hashIndex = row * width + column;
 
 		// So, the other four vertices of the quad will be at hashIndex + 1, hashIndex + gridWidth, and hashIndex + gridWidth + 1
-
-
 		unsigned int topLeft = hashIndex;
 		unsigned int topRight = hashIndex + 1;
 		unsigned int bottomLeft = hashIndex + width;
@@ -48,7 +45,6 @@ public:
 		float topRightX = vertices[8 * topRight], topRightZ = vertices[8 * topRight + 2];
 		float bottomLeftX = vertices[8 * bottomLeft], bottomLeftZ = vertices[8 * bottomLeft + 2];
 		float bottomRightX = vertices[8 * bottomRight], bottomRightZ = vertices[8 * bottomRight + 2];
-
 
 		// Remap our x and y such that the boundaries of the quad are the coordinate space limits in 0 to 1
 		float totalX = topRightX - topLeftX;
@@ -66,6 +62,11 @@ public:
 	float lowestLow = 9999999, highestHigh = -99999999;
 	unsigned int heightBO;
 	float * noise;
+
+	glm::vec2 XZat(unsigned int i) {
+		return glm::vec2(vertices[8 * i], vertices[8 * i + 2]);
+	}
+
 private:
 
 	void setPossibleValues();
@@ -81,8 +82,6 @@ private:
 	struct zHeightMapping { float z, height; };
 	std::multimap<float, zHeightMapping> SuperMap;
 	struct heightMapping { float x, z, height; };
-
-
 
 	heightMapping * HeightMap;
 

@@ -67,7 +67,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     return (ambient + diffuse + specular);
 }  
 vec3 CalcPointLight (PointLight light, vec3 normal, vec3 viewDir) {
-
+normal = normalize(normal);
 	// Calculate attenuation factor based on distance from the light to this fragment	
 	float fragToLightDistance = length(light.position - fragPosition);
 	float attenuationFactor = (1.0)/(fragToLightDistance * fragToLightDistance);
@@ -90,14 +90,14 @@ vec3 CalcPointLight (PointLight light, vec3 normal, vec3 viewDir) {
 	vec3 halfwayDir = normalize(lightDir + viewDir);
 	float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
 
-	specularLight = light.specular * spec * vec3(texture(material.specular, texCoord));  
+	specularLight = light.specular * spec ;  
 	
 	}
 	else {
 		// Specular Lighting
 	vec3 reflectDir = reflect(-incomingLightDirection, normal); 
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-	specularLight = light.specular * spec * vec3(texture(material.specular, texCoord));  
+	specularLight = light.specular * spec;  
 	
 	
 	}
@@ -241,9 +241,9 @@ vec3 color =  vec3(r,g,b);
 // Define static direction light source for now
 	DirLight dirLight;
 	dirLight.direction = vec3(cos(time),-1,0);
-	dirLight.ambient = vec3(0.25,0.25,0.25);
-	dirLight.diffuse = vec3(0.2,0.2,0.2);
-	dirLight.specular = vec3(0.15,0.15,0.15);
+	dirLight.ambient = vec3(0);
+	dirLight.diffuse = vec3(0);
+	dirLight.specular = vec3(0);
 	vec3 normal = norm;
 	vec3 viewDir = normalize(viewPosition - fragPosition);
 	
@@ -328,7 +328,7 @@ vec3 color =  vec3(r,g,b);
 	
 	float gamma = 2.2;
 	color = pow(color,vec3(1.0/gamma));
-	vec3 combinedResult = color*(pointResult +lightingResult);
+	vec3 combinedResult = color*(0.4*pointResult +lightingResult);
 	
 	
 

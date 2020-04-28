@@ -123,7 +123,7 @@ void main()
 	
 	vec3 normalizedPMTPos = normalize(PMTPos.xyz);
 	
-	fragHeight = noise;//2*noise  *cnoise(vec2(PMTPos.x,PMTPos.z))- 0.01*cos(noise);
+	fragHeight = 4*noise  *cnoise(vec2(PMTPos.x,PMTPos.z));//- 0.01*cos(noise);
 	float height = fragHeight;
 		//if (fragHeight < 0.2)  fragHeight += 0.1*sin(time*0.5);
 
@@ -132,7 +132,7 @@ void main()
 		
 
 	norm = aNormal;
-	fragPosition = vec3( projection * model * transform * vec4(vec3(aPos.x + gridOffset[gl_InstanceID].x,height,
+	fragPosition = vec3(  model  * vec4(vec3(aPos.x + gridOffset[gl_InstanceID].x,height,
 	aPos.z + gridOffset[gl_InstanceID].y), 1.0));
 
 }

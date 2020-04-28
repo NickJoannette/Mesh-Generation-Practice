@@ -99,6 +99,12 @@ GridTile::GridTile(unsigned int w, unsigned int l, float seed)
 
 	NoiseManager NM(w, l, seed);
 	NM.GenerateSimplexTerrainNoiseFor(noise);
+
+	// Place the noise values as the y coordinates for the mesh (hack to simplify normal calc for testing right now)
+
+	for (int i = 0; i < w*l; i++) vertices[8 * i + 1] = noise[i];
+
+
 	//for (int i = 0; i < w*l; i++) noise[i] = 0;
 	// Calculate face normals
 
@@ -111,8 +117,6 @@ GridTile::GridTile(unsigned int w, unsigned int l, float seed)
 	int ct = 0;
 	for (int i = 0; i < (w - 1)*(l - 1); i++, c++) {
 		if ((c + 1) % w == 0) ++c;
-		// To me, this is clockwise... Camera view matrix inversion causing confusion? Not sure... But 
-		// GL says it's CCW
 
 		// Indices for one face
 		*(indices + ct++) = c + l;

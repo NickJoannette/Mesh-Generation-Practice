@@ -6,6 +6,7 @@
 #include "Shader.h" 
 #include "GridTile.h"
 #include "Camera.h"
+#include <thread>
 #include "UI_InputManager.h"
 
 /*
@@ -50,29 +51,55 @@ public:
 
 	TerrainGrid(GridPosition center, Camera * cam, UI_InputManager * UIM) {
 		this->UIM = UIM;
-		cWidth = cLength = 128;
+		cWidth = cLength = 256;
 		camera = cam;
 		gridSquareShader = Shader("../Shaders/basicShader.vs", "../Shaders/basicShader.fs", "T");
+		normalDisplayShader = Shader("../Shaders/normalDisplayShader.vs", "../Shaders/normalDisplayShader.gs", "../Shaders/normalDisplayShader.fs", "T");
 		cent = center;
 		far = 1.0f;
 		gridTransform = glm::mat4(1);
 		gridModel = glm::mat4(1);
 		gridModel = glm::scale(gridModel, glm::vec3(1, 1, 1));
 		Grid = new GridSquare[gridSize];
+		noiseArrays = new float * [gridSize];
+		for (int i = 0; i < gridSize; ++i) noiseArrays[i] = new float[cWidth*cLength];
 		CenterGrid(center);
-		SeedGridTiles();
+		gridTile = GridTile(cWidth, cLength, glfwGetTime());	//SeedGridTiles();
+		NM = new NoiseManager(cWidth, cLength);
+		noiseWorkerThreads = new std::thread[gridSize];
+		initializeNoiseGrid();
 	};
 
-	GridSquare * findGridSquareContaining(float x, float z) {
-		for (int i = 0; i < gridSize; ++i) if (Grid[i].contains(x, z)) return &Grid[i];
-		return nullptr;
+	void initializeNoiseGrid() {
+
+
+		auto f = [](float * noiseArray, GridTile * GT) {
+
+			auto start = std::chrono::steady_clock::now();
+
+			
+
+			for (int i = 0; i < 256 * 256; ++i) noiseArray[i] = GT->noise[i] * 2.04;
+			auto end = std::chrono::steady_clock::now();
+			std::cout << "Elapsed time for thread : "
+				<< std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << std::endl;
+
+		};
+
+		for (int i = 0; i < gridSize; ++i) noiseWorkerThreads[i] = std::thread(f, noiseArrays[i], &gridTile);
+	}
+
+	unsigned int findGridSquareContaining(float x, float z) {
+		for (int i = 0; i < gridSize; ++i) if (Grid[i].contains(x, z)) return i;
+		return -1;
 	}
 
 	float getHeightAt(float x, float z) {
+		unsigned int ind = findGridSquareContaining(x, z);
+		GridSquare * GS = &Grid[ind];
+		std::cout << "Ratio: " << (noiseArrays[0][4] / gridTile.noise[4]) << std::endl;
 
-		//for (int i = 0; i < gridSize; ++i) std::cout << Grid[i].xBound.min << " , " << Grid[i].xBound.max << std::endl;
-		GridSquare * GS = findGridSquareContaining(x, z);
-		return gridTile.getHash(x - GS->position.x, z - GS->position.z);
+		return 4*NM->PNG->noise(glm::vec2(x,z))*gridTile.getHash(x - GS->position.x, z - GS->position.z);
 	}
 
 	void CenterGrid(GridPosition center) {
@@ -99,27 +126,18 @@ public:
 	}
 
 	glm::vec3 terrainLightPos = glm::vec3(0.0f, 1.0f, 0.0f);
+
 	void bindGridShader() {
-
-		// Define a Lambda Expression 
-	/*	auto f = [](Surface * c) {
-			c->regenHeights(3.0f);
-		};*/
-
-		// This thread is launched by using  
-		// lamda expression as callable 
-		//thread th3(f, &GridTiles[0]);
-		//th3.join();
 		gridSquareShader.use();
 		gridSquareShader.setInt("heightTex", 0);
 		gridSquareShader.setInt("material.diffuse", 1);
 		gridSquareShader.setInt("material.specular", 2);
-		gridSquareShader.setFloat("material.shininess", 16);
+		gridSquareShader.setFloat("material.shininess", 32);
 		gridSquareShader.setFloat("flashLight.cutOff", glm::cos(glm::radians(10.0f)));
 		gridSquareShader.setVec3("pointLights[0].position",terrainLightPos);
-		glm::vec3 pointColor = glm::vec3(1, abs(sinf(glfwGetTime()*0.1)), 0);
-		gridSquareShader.setVec3("pointLights[0].ambient",pointColor);
-		gridSquareShader.setVec3("pointLights[0].diffuse",pointColor);
+		glm::vec3 pointColor = UIM->controlledLightSource;
+		gridSquareShader.setVec3("pointLights[0].ambient", pointColor);
+		gridSquareShader.setVec3("pointLights[0].diffuse", pointColor);
 		gridSquareShader.setVec3("pointLights[0].specular",pointColor);
 
 		//surfaceShader.setVec3("flashLight.position", rayPosition);
@@ -151,6 +169,14 @@ public:
 		gridSquareShader.setMat4("transform", gridTransform);
 		for (unsigned int i = 0; i < gridSize; i++)	gridSquareShader.setVec2(("gridOffset[" + std::to_string(i) + "]"), glm::vec2(Grid[i].position.x, Grid[i].position.z));
 		gridTile.DrawInstanced(gridSize);
+		if (UIM->displayNormals) {
+			normalDisplayShader.use();
+			normalDisplayShader.setMat4("view", camera->GetViewMatrix());
+			normalDisplayShader.setMat4("projection", *camera->GetProjectionMatrix());
+			normalDisplayShader.setMat4("model", gridModel);
+			normalDisplayShader.setMat4("transform", gridTransform);
+			gridTile.DrawInstanced(gridSize);
+		}
 	}
 
 	void bufferTile(short i) {
@@ -162,12 +188,17 @@ public:
 
 private:
 
+	float * * noiseArrays;
+	std::thread * noiseWorkerThreads;
 	Camera * camera;
 	std::map<short, float *> TileHash;
 	unsigned int cWidth, cLength;
 	GridTile gridTile;
 	GridSquare * Grid;
 	Shader gridSquareShader;
+	Shader normalDisplayShader;
+	NoiseManager * NM;
+
 	float limitX, limitZ, far;
 	glm::mat4 gridModel;
 	GridPosition cent;

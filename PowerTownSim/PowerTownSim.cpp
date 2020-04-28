@@ -55,7 +55,6 @@ int main() {
 	Shader lightSourceShaderProgram("../Shaders/lightSourceShader.vs", "../Shaders/lightSourceShader.fs", "G");
 	Shader cubeShaderProgram("../Shaders/texturedCubeShader.vs", "../Shaders/texturedCubeShader.fs", "G");
 	Shader backgroundShaderProgram("../Shaders/backgroundTextureShader.vs", "../Shaders/backgroundTextureShader.fs", "G");
-	Shader normalDisplayShader("../Shaders/normalDisplayShader.vs", "../Shaders/normalDisplayShader.gs", "../Shaders/normalDisplayShader.fs", "T");
 
 
 	// Renderers
@@ -77,7 +76,7 @@ int main() {
 
 	float cFrame;
 	float time;
-	irrklang::ISoundSource * src = SoundEngine->addSoundSourceFromFile("../Audio/waves2.wav");
+//	irrklang::ISoundSource * src = SoundEngine->addSoundSourceFromFile("../Audio/waves2.wav");
 	irrklang::ISoundSource * src2 = SoundEngine->addSoundSourceFromFile("../Audio/flyOn.wav");
 	irrklang::ISoundSource * src3 = SoundEngine->addSoundSourceFromFile("../Audio/flyOff.wav");
 

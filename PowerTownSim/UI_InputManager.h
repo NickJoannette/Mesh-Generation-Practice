@@ -52,6 +52,7 @@ public:
 	bool ultraLighting = false;
 	bool swapMap = false;
 	bool lockCameraToTerrain = true;
+	glm::vec3 controlledLightSource = glm::vec3(1.0f);
 	float visibleCursorY = lastY;
 	float visibleCursorX = lastX;
 	const float SCR_WIDTH = 1440.0, SCR_HEIGHT = 900.0;
@@ -129,6 +130,18 @@ private:
 
 		if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
 			lockCameraToTerrain = !lockCameraToTerrain;
+		}
+		if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
+			controlledLightSource = glm::vec3(0, 1, 1);
+		}
+		if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
+			controlledLightSource = glm::vec3(1,0, 1);
+		}
+		if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS) {
+			controlledLightSource = glm::vec3(0, 0, 1);
+		}
+		if (glfwGetKey(window, GLFW_KEY_F4) == GLFW_PRESS) {
+			controlledLightSource = glm::vec3(1, 1, 1);
 		}
 		if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
 		{
